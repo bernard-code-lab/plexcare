@@ -20,3 +20,8 @@ npm-debug.log*
 .env
 .env.*
 !.env.example
+
+# Re-include markdown — the user's global excludes (~/.gitignore_global)
+# has a "*.MD" rule that, on case-insensitive macOS, also ignores *.md files.
+!*.md
+!**/*.md
