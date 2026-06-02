@@ -10,8 +10,9 @@
 # PlexCare
 
 Inovando em plataformas web e mobile, produtos:
-**sala virtual**: Pensado para facilitar a comunicação a distancia para empresas e seus clientes como (medicos, clinicas, dentistas, salão de beleza e outros)
-**Modelo**: Multi-tenant B2B — cada tenant (clinica/hospital) tem sua propria configuracao, API keys, limites de plano e faturamento por minuto de sala.
+- **sala virtual**: Pensado para facilitar a comunicação a distancia para empresas e seus clientes como (medicos, clinicas, dentistas, salão de beleza e outros)
+
+- **Modelo**: Multi-tenant B2B — cada tenant (clinica/hospital) tem sua propria configuracao, API keys, limites de plano e faturamento por minuto de sala.
 
 ---
 
