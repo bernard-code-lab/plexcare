@@ -1,4 +1,4 @@
-import { Reveal, Counter } from './primitives'
+import { Reveal, Counter, Sparkline } from './primitives'
 
 export default function Problem() {
   return (
@@ -46,6 +46,7 @@ export default function Problem() {
                   <Counter to={s.n} suffix={s.suffix} />
                 </div>
                 <p className="mt-3 text-[0.86rem] leading-snug text-mute">{s.label}</p>
+                {s.accent && <Sparkline className="mt-4" />}
               </div>
             ))}
           </div>

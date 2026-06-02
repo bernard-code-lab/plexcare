@@ -8,6 +8,7 @@ import Integrations from './components/Integrations'
 import Testimonial from './components/Testimonial'
 import Pricing from './components/Pricing'
 import FAQ from './components/FAQ'
+import DemoScheduler from './components/DemoScheduler'
 import CTA from './components/CTA'
 import Footer from './components/Footer'
 
@@ -20,6 +21,22 @@ export default function App() {
       >
         Pular para o conteúdo
       </a>
+
+      {/* Page-wide film grain — the single biggest "printed, not generated" cue. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-0 z-[5] opacity-[0.04] grain"
+        style={{ backgroundSize: '200px' }}
+      />
+      {/* Cinematic vignette to pull the eye toward center. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-0 z-[5]"
+        style={{
+          background:
+            'radial-gradient(130% 100% at 50% 35%, transparent 58%, rgba(2,8,7,0.55) 100%)',
+        }}
+      />
       <Nav />
       <main>
         <Hero />
@@ -31,6 +48,7 @@ export default function App() {
         <Testimonial />
         <Pricing />
         <FAQ />
+        <DemoScheduler />
         <CTA />
       </main>
       <Footer />

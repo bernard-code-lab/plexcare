@@ -1,8 +1,9 @@
-import { Reveal, Counter } from './primitives'
+import { Reveal, Counter, SectionGlow } from './primitives'
 
 export default function Testimonial() {
   return (
-    <section className="container-page py-20 sm:py-24">
+    <section className="relative container-page py-20 sm:py-24">
+      <SectionGlow tone="teal" position="left-[18%] top-1/4" size="h-[24rem] w-[30rem]" />
       <Reveal y={26}>
         <figure className="glass relative overflow-hidden rounded-[2rem] p-8 shadow-card sm:p-14">
           <div

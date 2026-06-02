@@ -1,5 +1,5 @@
 import { Check, ArrowUpRight } from 'lucide-react'
-import { Reveal } from './primitives'
+import { Reveal, SectionGlow, Spotlight } from './primitives'
 
 const PLANS = [
   {
@@ -50,7 +50,8 @@ const PLANS = [
 
 export default function Pricing() {
   return (
-    <section id="precos" className="container-page scroll-mt-28 py-24 sm:py-28">
+    <section id="precos" className="relative container-page scroll-mt-28 py-24 sm:py-28">
+      <SectionGlow tone="gold" position="left-1/2 top-1/2" size="h-[24rem] w-[34rem]" />
       <div className="mx-auto max-w-2xl text-center">
         <Reveal>
           <span className="eyebrow">Planos</span>
@@ -71,12 +72,13 @@ export default function Pricing() {
         {PLANS.map((p, i) => (
           <Reveal key={p.name} delay={i * 0.08} y={28}>
             <div
-              className={`relative h-full overflow-hidden rounded-[1.6rem] p-7 sm:p-8 ${
+              className={`group relative h-full overflow-hidden rounded-[1.6rem] p-7 sm:p-8 ${
                 p.featured
                   ? 'border border-teal-300/35 bg-gradient-to-b from-teal-400/[0.1] to-transparent shadow-glow'
                   : 'glass shadow-card'
               }`}
             >
+              <Spotlight tone={p.featured ? 'rgba(94,234,212,0.16)' : 'rgba(94,234,212,0.12)'} />
               {p.featured && (
                 <span className="absolute right-6 top-6 rounded-full bg-teal-400/15 px-3 py-1 text-[0.7rem] font-medium uppercase tracking-wider text-teal-200">
                   Mais escolhido
@@ -90,7 +92,7 @@ export default function Pricing() {
               </div>
 
               <a
-                href="#"
+                href="#comecar"
                 className={`mt-6 w-full ${p.featured ? 'btn-primary' : 'btn-ghost'}`}
               >
                 {p.cta}

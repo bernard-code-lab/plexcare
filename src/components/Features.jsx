@@ -1,4 +1,5 @@
-import { motion, useReducedMotion } from 'framer-motion'
+import { useRef } from 'react'
+import { motion, useReducedMotion, useSpring, useMotionValue } from 'framer-motion'
 import {
   Bot,
   CalendarCheck,
@@ -7,13 +8,33 @@ import {
   ShieldCheck,
   Wand2,
 } from 'lucide-react'
-import { Reveal } from './primitives'
+import { Reveal, SectionGlow, Spotlight } from './primitives'
 
 function Card({ icon: Icon, title, desc, className = '', accent = 'teal', children }) {
   const isIris = accent === 'iris'
+  const reduce = useReducedMotion()
+  const ref = useRef(null)
+  const rx = useSpring(useMotionValue(0), { stiffness: 150, damping: 18 })
+  const ry = useSpring(useMotionValue(0), { stiffness: 150, damping: 18 })
+
+  function onMove(e) {
+    if (reduce || !ref.current) return
+    const r = ref.current.getBoundingClientRect()
+    rx.set(-((e.clientY - r.top) / r.height - 0.5) * 4)
+    ry.set(((e.clientX - r.left) / r.width - 0.5) * 4)
+  }
+  function reset() {
+    rx.set(0)
+    ry.set(0)
+  }
+
   return (
-    <div
-      className={`group glass relative overflow-hidden rounded-3xl p-6 shadow-card transition-colors duration-300 sm:p-7 ${
+    <motion.div
+      ref={ref}
+      onMouseMove={onMove}
+      onMouseLeave={reset}
+      style={{ rotateX: rx, rotateY: ry, transformPerspective: 1100 }}
+      className={`group glass relative overflow-hidden rounded-3xl p-6 shadow-card transition-colors duration-300 will-change-transform sm:p-7 ${
         isIris ? 'hover:border-gold-300/30' : 'hover:border-teal-300/30'
       } ${className}`}
     >
@@ -22,8 +43,9 @@ function Card({ icon: Icon, title, desc, className = '', accent = 'teal', childr
           isIris ? 'bg-gold-500/14' : 'bg-teal-500/10'
         }`}
       />
+      <Spotlight tone={isIris ? 'rgba(247,207,114,0.13)' : 'rgba(94,234,212,0.14)'} />
       <span
-        className={`grid h-11 w-11 place-items-center rounded-xl border ${
+        className={`grid h-11 w-11 place-items-center rounded-xl border transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110 ${
           isIris
             ? 'border-gold-400/25 bg-gold-400/[0.1] text-gold-300'
             : 'border-teal-400/20 bg-teal-400/[0.08] text-teal-300'
@@ -34,7 +56,7 @@ function Card({ icon: Icon, title, desc, className = '', accent = 'teal', childr
       <h3 className="mt-5 font-display text-xl font-semibold tracking-tight text-cream">{title}</h3>
       <p className="mt-2.5 text-[0.95rem] leading-relaxed text-mute">{desc}</p>
       {children}
-    </div>
+    </motion.div>
   )
 }
 
@@ -67,7 +89,8 @@ function ChannelViz() {
 
 export default function Features() {
   return (
-    <section id="recursos" className="container-page scroll-mt-28 py-24 sm:py-28">
+    <section id="recursos" className="relative container-page scroll-mt-28 py-24 sm:py-28">
+      <SectionGlow tone="teal" position="left-[10%] top-[22%]" size="h-[28rem] w-[28rem]" />
       <div className="mx-auto max-w-2xl text-center">
         <Reveal>
           <span className="eyebrow">Tudo em um só lugar</span>
@@ -136,13 +159,24 @@ export default function Features() {
         </Reveal>
 
         <Reveal className="md:col-span-3" delay={0.04} y={26}>
-          <Card
-            icon={ShieldCheck}
-            title="Pronta para a saúde brasileira"
-            desc="Consentimento eletrônico, trilha de auditoria e dados em conformidade com a LGPD e a Resolução CFM 2.314/2022. E quando precisar de laudo com validade jurídica, o ecossistema PlexCare já está ao lado."
-            className="h-full md:flex md:items-center md:justify-between md:gap-8"
-          >
-            <div className="mt-5 flex flex-wrap gap-2 md:mt-0 md:shrink-0">
+          <div className="group glass relative h-full overflow-hidden rounded-3xl p-6 shadow-card transition-colors duration-300 hover:border-teal-300/30 sm:p-7 md:flex md:items-center md:gap-10">
+            <Spotlight tone="rgba(94,234,212,0.14)" />
+            <div className="flex items-start gap-4 md:flex-1">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-teal-400/20 bg-teal-400/[0.08] text-teal-300 transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110">
+                <ShieldCheck size={20} strokeWidth={1.9} />
+              </span>
+              <div>
+                <h3 className="font-display text-xl font-semibold tracking-tight text-cream">
+                  Pronta para a saúde brasileira
+                </h3>
+                <p className="mt-2 max-w-2xl text-[0.95rem] leading-relaxed text-mute">
+                  Consentimento eletrônico, trilha de auditoria e dados em conformidade com a LGPD e a Resolução
+                  CFM 2.314/2022. E quando precisar de laudo com validade jurídica, o ecossistema PlexCare já está
+                  ao lado.
+                </p>
+              </div>
+            </div>
+            <div className="mt-6 flex flex-wrap gap-2 md:mt-0 md:max-w-[36%] md:shrink-0 md:justify-end">
               {['LGPD', 'CFM 2.314/2022', 'ICP-Brasil', 'Trilha de auditoria'].map((t) => (
                 <span
                   key={t}
@@ -152,7 +186,7 @@ export default function Features() {
                 </span>
               ))}
             </div>
-          </Card>
+          </div>
         </Reveal>
       </div>
     </section>

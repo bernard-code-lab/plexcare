@@ -1,0 +1,25 @@
+PlexCare — Demonstração confirmada
+
+Tudo certo, {{firstName}}! Reservamos seu horário com um especialista da PlexCare.
+
+Data:    {{dateLong}}
+Horário: {{time}} (horário de Brasília)
+Email:   {{email}}
+WhatsApp:{{phone}}
+
+Entrar na sala da demo:
+{{meetingUrl}}
+
+Precisa mudar? Remarcar ou cancelar:
+{{rescheduleUrl}}
+
+O que esperar:
+- 15 minutos, sem compromisso
+- Demonstração ao vivo da Agenda Inteligente + IA anti-no-show
+- Espaço para dúvidas de LGPD e implantação
+
+--
+Você recebeu este email porque agendou uma demonstração em plexcare.com.br.
+Dúvidas? {{supportEmail}}
+PlexCare Tecnologia · Feito no Brasil · © {{year}}
+Tratamos seus dados conforme a LGPD.

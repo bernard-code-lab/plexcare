@@ -42,6 +42,21 @@ export default {
         },
         cream: '#E9F4F1',
         mute: '#8AA8A1',
+
+        // shadcn token layer — mapped to the PlexCare dark-teal brand so any
+        // shadcn component (card, calendar, button, input…) renders on-brand.
+        border: '#15362F',
+        input: '#15362F',
+        ring: '#2DD4BF',
+        background: '#04100E',
+        foreground: '#E9F4F1',
+        primary: { DEFAULT: '#2DD4BF', foreground: '#04100E' },
+        secondary: { DEFAULT: '#0E2A25', foreground: '#E9F4F1' },
+        muted: { DEFAULT: '#0A201C', foreground: '#8AA8A1' },
+        accent: { DEFAULT: '#11332C', foreground: '#EAF7F3' },
+        popover: { DEFAULT: '#0A201C', foreground: '#E9F4F1' },
+        card: { DEFAULT: '#08201B', foreground: '#E9F4F1' },
+        destructive: { DEFAULT: '#EF4444', foreground: '#FFFFFF' },
       },
       fontFamily: {
         display: ['"Cabinet Grotesk"', 'system-ui', 'sans-serif'],

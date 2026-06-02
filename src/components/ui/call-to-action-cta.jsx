@@ -18,6 +18,7 @@ const CtaCard = React.forwardRef(
       overlayClassName,
       inputClassName,
       buttonClassName,
+      titleClassName,
       ...props
     },
     ref,
@@ -77,7 +78,10 @@ const CtaCard = React.forwardRef(
         >
           <div className="flex flex-col items-start text-left text-white">
             <motion.h2
-              className="text-3xl font-extrabold tracking-tight md:text-4xl lg:text-5xl"
+              className={cn(
+                'text-3xl font-extrabold tracking-tight md:text-4xl lg:text-5xl',
+                titleClassName,
+              )}
               variants={itemVariants}
             >
               {title}

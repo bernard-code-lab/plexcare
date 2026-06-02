@@ -1,0 +1,15 @@
+{
+  "name": "PlexCare — Agenda Inteligente",
+  "short_name": "PlexCare",
+  "description": "Agenda inteligente multicanal com IA anti-no-show para clínicas e consultórios.",
+  "lang": "pt-BR",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#04100E",
+  "theme_color": "#04100E",
+  "icons": [
+    { "src": "/favicon.svg", "type": "image/svg+xml", "sizes": "any" },
+    { "src": "/icon-192.png", "type": "image/png", "sizes": "192x192", "purpose": "any maskable" },
+    { "src": "/icon-512.png", "type": "image/png", "sizes": "512x512", "purpose": "any maskable" }
+  ]
+}

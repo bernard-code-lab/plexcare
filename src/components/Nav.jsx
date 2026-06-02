@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Menu, X, ArrowUpRight } from 'lucide-react'
 import { Logo } from './primitives'
+import { GlowMenu } from '@/components/ui/glow-menu'
 
 const LINKS = [
   { label: 'Recursos', href: '#recursos' },
@@ -30,24 +31,13 @@ export default function Nav() {
       >
         <Logo />
 
-        <ul className="hidden items-center gap-1 md:flex">
-          {LINKS.map((l) => (
-            <li key={l.href}>
-              <a
-                href={l.href}
-                className="rounded-full px-3.5 py-2 text-sm text-mute transition-colors duration-200 hover:text-cream cursor-pointer"
-              >
-                {l.label}
-              </a>
-            </li>
-          ))}
-        </ul>
+        <GlowMenu items={LINKS} className="hidden md:flex" />
 
         <div className="hidden items-center gap-3 md:flex">
           <a href="#" className="text-sm text-mute transition-colors hover:text-cream cursor-pointer">
             Entrar
           </a>
-          <a href="#precos" className="btn-primary !px-5 !py-2.5 text-sm">
+          <a href="#demo" className="btn-primary !px-5 !py-2.5 text-sm">
             Agendar demo
             <ArrowUpRight size={16} strokeWidth={2.4} />
           </a>
@@ -85,7 +75,7 @@ export default function Nav() {
                 </li>
               ))}
             </ul>
-            <a href="#precos" onClick={() => setOpen(false)} className="btn-primary mt-2 w-full">
+            <a href="#demo" onClick={() => setOpen(false)} className="btn-primary mt-2 w-full">
               Agendar demo
               <ArrowUpRight size={16} strokeWidth={2.4} />
             </a>

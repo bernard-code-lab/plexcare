@@ -25,3 +25,7 @@ npm-debug.log*
 # has a "*.MD" rule that, on case-insensitive macOS, also ignores *.md files.
 !*.md
 !**/*.md
+
+
+#Ignore cursor AI rules
+.cursor/rules/codacy.mdc

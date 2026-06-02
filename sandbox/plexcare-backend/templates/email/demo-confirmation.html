@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="pt-BR" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="x-apple-disable-message-reformatting" />
+  <meta name="color-scheme" content="light" />
+  <meta name="supported-color-schemes" content="light" />
+  <title>Demonstração confirmada — PlexCare</title>
+  <!--
+    Transactional email: demo confirmation.
+    Engine-agnostic placeholders ({{var}}, Mustache/Handlebars style).
+    Required: firstName, dateLong, time, email, phone, meetingUrl, rescheduleUrl,
+              logoUrl, supportEmail, year. See README.md for the data contract.
+    Brand fonts (Cabinet Grotesk/Switzer) do NOT render in email clients — we use
+    a web-safe stack on purpose. All CSS is inline for client compatibility.
+  -->
+  <style>
+    /* Progressive enhancement only — clients that strip <style> still work via inline styles. */
+    @media only screen and (max-width: 620px) {
+      .container { width: 100% !important; }
+      .px { padding-left: 22px !important; padding-right: 22px !important; }
+      .stack { display: block !important; width: 100% !important; }
+    }
+    a { color: #0d9488; }
+  </style>
+</head>
+<body style="margin:0; padding:0; background-color:#f3f6f5; -webkit-font-smoothing:antialiased;">
+  <!-- Preheader: shown in inbox preview, hidden in body -->
+  <div style="display:none; max-height:0; overflow:hidden; mso-hide:all; font-size:1px; line-height:1px; color:#f3f6f5;">
+    Sua demonstração da PlexCare está confirmada para {{dateLong}} às {{time}}. O link da sala está aqui dentro.
+    &#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;
+  </div>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f3f6f5;">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+
+        <!-- Card -->
+        <table role="presentation" class="container" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px; max-width:600px; background-color:#ffffff; border-radius:18px; overflow:hidden; box-shadow:0 1px 3px rgba(15,27,53,0.06);">
+
+          <!-- Brand bar -->
+          <tr>
+            <td class="px" style="padding:26px 40px 0 40px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="vertical-align:middle;">
+                    <img src="{{logoUrl}}" width="36" height="36" alt="PlexCare" style="display:block; border:0; border-radius:9px;" />
+                  </td>
+                  <td style="vertical-align:middle; padding-left:10px; font-family:Arial,Helvetica,sans-serif; font-size:19px; font-weight:700; letter-spacing:-0.2px; color:#0f1b35;">
+                    Plex<span style="font-weight:400;">Care</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Status -->
+          <tr>
+            <td class="px" align="center" style="padding:30px 40px 0 40px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td align="center" style="width:56px; height:56px; background-color:#e9faf6; border-radius:50%; font-family:Arial,Helvetica,sans-serif; font-size:28px; color:#0d9488; line-height:56px;">
+                    &#10003;
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td class="px" align="center" style="padding:18px 40px 0 40px; font-family:Arial,Helvetica,sans-serif; font-size:24px; font-weight:700; color:#0f1b35;">
+              Demonstração confirmada
+            </td>
+          </tr>
+          <tr>
+            <td class="px" align="center" style="padding:10px 40px 0 40px; font-family:Arial,Helvetica,sans-serif; font-size:15px; line-height:23px; color:#5b6b73;">
+              Tudo certo, {{firstName}}! Reservamos seu horário com um especialista da PlexCare.
+            </td>
+          </tr>
+
+          <!-- Details box -->
+          <tr>
+            <td class="px" style="padding:24px 40px 0 40px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f6faf9; border:1px solid #e3edea; border-radius:12px;">
+                <tr>
+                  <td style="padding:18px 20px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-family:Arial,Helvetica,sans-serif; font-size:14px; color:#0f1b35;">
+                      <tr>
+                        <td style="padding:5px 0; color:#5b6b73; width:130px;">Data</td>
+                        <td style="padding:5px 0; font-weight:700; text-transform:capitalize;">{{dateLong}}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding:5px 0; color:#5b6b73;">Horário</td>
+                        <td style="padding:5px 0; font-weight:700;">{{time}} (horário de Brasília)</td>
+                      </tr>
+                      <tr>
+                        <td style="padding:5px 0; color:#5b6b73;">Email</td>
+                        <td style="padding:5px 0;">{{email}}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding:5px 0; color:#5b6b73;">WhatsApp</td>
+                        <td style="padding:5px 0;">{{phone}}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- CTA button (bulletproof) -->
+          <tr>
+            <td class="px" align="center" style="padding:26px 40px 0 40px;">
+              <!--[if mso]>
+              <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{meetingUrl}}" style="height:46px;v-text-anchor:middle;width:260px;" arcsize="22%" fillcolor="#0d9488" stroke="f">
+                <w:anchorlock/>
+                <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:15px;font-weight:bold;">Entrar na sala da demo</center>
+              </v:roundrect>
+              <![endif]-->
+              <!--[if !mso]><!-- -->
+              <a href="{{meetingUrl}}" target="_blank" style="display:inline-block; background-color:#0d9488; color:#ffffff; font-family:Arial,Helvetica,sans-serif; font-size:15px; font-weight:700; text-decoration:none; padding:14px 30px; border-radius:10px;">
+                Entrar na sala da demo
+              </a>
+              <!--<![endif]-->
+            </td>
+          </tr>
+          <tr>
+            <td class="px" align="center" style="padding:14px 40px 0 40px; font-family:Arial,Helvetica,sans-serif; font-size:13px; color:#5b6b73;">
+              Precisa mudar? <a href="{{rescheduleUrl}}" target="_blank" style="color:#0d9488; font-weight:700; text-decoration:none;">Remarcar ou cancelar</a>
+            </td>
+          </tr>
+
+          <!-- What to expect -->
+          <tr>
+            <td class="px" style="padding:28px 40px 0 40px;">
+              <hr style="border:none; border-top:1px solid #eef3f1; margin:0;" />
+            </td>
+          </tr>
+          <tr>
+            <td class="px" style="padding:20px 40px 0 40px; font-family:Arial,Helvetica,sans-serif; font-size:13px; font-weight:700; letter-spacing:0.5px; text-transform:uppercase; color:#0d9488;">
+              O que esperar
+            </td>
+          </tr>
+          <tr>
+            <td class="px" style="padding:10px 40px 0 40px; font-family:Arial,Helvetica,sans-serif; font-size:14px; line-height:22px; color:#41525a;">
+              • 15 minutos, sem compromisso<br />
+              • Demonstração ao vivo da Agenda Inteligente + IA anti-no-show<br />
+              • Espaço para dúvidas de LGPD e implantação
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td class="px" style="padding:30px 40px 34px 40px;">
+              <hr style="border:none; border-top:1px solid #eef3f1; margin:0 0 18px 0;" />
+              <p style="margin:0; font-family:Arial,Helvetica,sans-serif; font-size:12px; line-height:19px; color:#8a99a0;">
+                Você recebeu este email porque agendou uma demonstração em plexcare.com.br.
+                Dúvidas? Fale com <a href="mailto:{{supportEmail}}" style="color:#0d9488; text-decoration:none;">{{supportEmail}}</a>.
+              </p>
+              <p style="margin:12px 0 0 0; font-family:Arial,Helvetica,sans-serif; font-size:12px; line-height:19px; color:#aab6bb;">
+                PlexCare Tecnologia · Feito no Brasil · © {{year}}<br />
+                Tratamos seus dados conforme a LGPD.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+        <!-- /Card -->
+
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

@@ -1,6 +1,6 @@
 import { motion, useReducedMotion } from 'framer-motion'
 import { ArrowUpRight, Check, MessageCircle, Sparkles, Star } from 'lucide-react'
-import { Reveal, Tilt } from './primitives'
+import { Reveal, Tilt, Magnetic } from './primitives'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
 const TRUSTED = [
@@ -153,10 +153,12 @@ export default function Hero() {
 
           <Reveal delay={0.24}>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-              <a href="#precos" className="btn-primary">
-                Começar agora
-                <ArrowUpRight size={18} strokeWidth={2.4} />
-              </a>
+              <Magnetic>
+                <a href="#precos" className="btn-primary">
+                  Começar agora
+                  <ArrowUpRight size={18} strokeWidth={2.4} />
+                </a>
+              </Magnetic>
               <a href="#como-funciona" className="btn-ghost">
                 Ver como funciona
               </a>
