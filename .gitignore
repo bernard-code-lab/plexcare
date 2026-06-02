@@ -1,0 +1,29 @@
+# Re-include markdown files — the global gitignore excludes *.md
+!*.md
+!**/*.md
+
+# Dependencies
+node_modules/
+
+# Build
+dist/
+dist-ssr/
+
+# OS
+.DS_Store
+
+# Editor
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# AI tools
+.cursor/rules/codacy.mdc

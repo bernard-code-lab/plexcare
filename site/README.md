@@ -1,32 +1,77 @@
-# PlexCare — Agenda Inteligente
+<p align="center">
+  <img src="https://img.shields.io/badge/vite-5-646CFF?logo=vite&logoColor=white" alt="Vite 5" />
+  <img src="https://img.shields.io/badge/react-18-61DAFB?logo=react&logoColor=black" alt="React 18" />
+  <img src="https://img.shields.io/badge/tailwind-3-06B6D4?logo=tailwindcss&logoColor=white" alt="Tailwind 3" />
+  <img src="https://img.shields.io/badge/framer--motion-animations-FF0055" alt="Framer Motion" />
+</p>
 
-Landing page premium da **Agenda Inteligente** da PlexCare: agendamento multicanal (Google, iOS e WhatsApp) com IA anti-no-show, para médicos, clínicas e advogados no Brasil.
+# PlexCare — Site
+
+Marketing site da PlexCare: landing page da **Agenda Inteligente** com agendamento multicanal (Google, iOS e WhatsApp) e IA anti-no-show, para medicos, clinicas e advogados no Brasil.
+
+---
 
 ## Stack
 
-- **Vite** + **React 18**
-- **Tailwind CSS v3**
-- **Framer Motion** (animações / reveals com respeito a `prefers-reduced-motion`)
-- **lucide-react** (ícones SVG)
-- Componentes em `src/components/ui/` no padrão shadcn (alias `@/` → `src/`)
+| Tecnologia | Uso |
+|---|---|
+| **Vite + React 18** | Build e runtime |
+| **Tailwind CSS v3** | Estilizacao com tema customizado |
+| **Framer Motion** | Animacoes com respeito a `prefers-reduced-motion` |
+| **shadcn/ui** | Componentes em `src/components/ui/` |
+| **Radix UI** | Primitives headless (avatar, slot) |
+| **lucide-react** | Icones SVG |
 
-## Rodando localmente
+## Design System
+
+| Propriedade | Valor |
+|---|---|
+| Cor primaria | teal `#14B8A6` |
+| Cor de destaque | dourado `#E3B341` |
+| Fundo | quase-preto `#020807`, `#0D1117` |
+| Titulos | Cabinet Grotesk |
+| Corpo | Switzer |
+| Efeitos | film grain, vignette, aurora-background |
+
+## Desenvolvimento Local
 
 ```bash
 npm install
-npm run dev      # http://localhost:5173
-npm run build    # gera dist/
-npm run preview  # serve o build
+npm run dev        # http://localhost:5173
+npm run build      # gera dist/
+npm run preview    # serve o build
 ```
 
 ## Estrutura
 
-- `src/App.jsx` — composição das seções da landing
-- `src/components/` — seções (Hero, Features, Pricing, CTA, FAQ, ...)
-- `src/components/ui/` — componentes reutilizáveis (avatar, button, input, aurora-background, illuminated-hero, call-to-action-cta)
-- `src/index.css` — tema (cores teal/dourado, tipografia Cabinet Grotesk + Switzer), keyframes e efeitos
+```
+site/
+  src/
+    App.jsx                    Composicao das secoes da landing
+    index.css                  Tema, keyframes, efeitos
+    components/
+      Hero.jsx                 Hero section
+      Features.jsx             Features grid
+      Pricing.jsx              Planos e precos
+      CTA.jsx                  Call to action
+      Nav.jsx                  Navegacao responsiva
+      DemoScheduler.jsx        Agendamento de demo
+      ui/                      Componentes reutilizaveis (shadcn)
+        avatar.jsx
+        button.jsx
+        calendar.jsx
+        card.jsx
+        glow-menu.jsx
+        aurora-background.jsx
+        call-to-action-cta.jsx
+  public/                      PWA assets, favicon, manifest
+  docs/
+    ONBOARDING.md              Guia de onboarding do projeto
+```
 
 ## Rotas
 
-- `/` — site principal
-- `/#/showcase` — showcase isolado do componente IlluminatedHero
+| Rota | Descricao |
+|---|---|
+| `/` | Site principal |
+| `/#/showcase` | Showcase isolado do IlluminatedHero |
