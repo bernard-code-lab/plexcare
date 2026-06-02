@@ -1,0 +1,154 @@
+name: plexcare-platform-dev
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # Room Service — API HTTP que cria salas e tokens LiveKit
+  # ---------------------------------------------------------------------------
+  room-service:
+    build:
+      context: .
+      target: dev
+      args:
+        SERVICE: room-service
+    volumes:
+      - .:/app                         # código fonte montado para hot reload
+      - go-build-cache:/root/.cache/go-build
+      - go-pkg-cache:/go/pkg/mod
+    environment:
+      SERVICE: room-service
+      PORT: "8080"
+      DATABASE_URL: postgres://plexcare:plexcare@postgres:5432/plexcare_dev?sslmode=disable
+      REDIS_URL: redis://redis:6379
+      KAFKA_BROKERS: kafka:9092
+      LIVEKIT_HOST: ws://livekit:7880
+      LIVEKIT_API_KEY: devkey
+      LIVEKIT_API_SECRET: devsecret123456  # mínimo 32 chars para HMAC-SHA256
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis:    { condition: service_healthy }
+      kafka:    { condition: service_healthy }
+      livekit:  { condition: service_started }
+    restart: on-failure
+
+  # ---------------------------------------------------------------------------
+  # Usage Metering — Kafka consumer, sem porta HTTP exposta
+  # ---------------------------------------------------------------------------
+  usage-metering:
+    build:
+      context: .
+      target: dev
+      args:
+        SERVICE: usage-metering
+    volumes:
+      - .:/app
+      - go-build-cache:/root/.cache/go-build
+      - go-pkg-cache:/go/pkg/mod
+    environment:
+      SERVICE: usage-metering
+      DATABASE_URL: postgres://plexcare:plexcare@postgres:5432/plexcare_dev?sslmode=disable
+      KAFKA_BROKERS: kafka:9092
+    depends_on:
+      postgres: { condition: service_healthy }
+      kafka:    { condition: service_healthy }
+    restart: on-failure
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL 16
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: plexcare_dev
+      POSTGRES_USER: plexcare
+      POSTGRES_PASSWORD: plexcare
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d:ro  # migrations rodam no primeiro start
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U plexcare -d plexcare_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # ---------------------------------------------------------------------------
+  # Redis 7 — routing LiveKit entre nodes + rate limiting
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    command: redis-server --save "" --appendonly no  # sem persistência em dev
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ---------------------------------------------------------------------------
+  # Kafka (KRaft mode — sem ZooKeeper)
+  # ---------------------------------------------------------------------------
+  kafka:
+    image: confluentinc/cp-kafka:7.7.0
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_CLUSTER_ID: plexcare-dev-cluster-00
+      KAFKA_LOG_RETENTION_HOURS: 24       # em dev não precisamos de retenção longa
+    ports:
+      - "9092:9092"
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:9092 --list"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  # ---------------------------------------------------------------------------
+  # LiveKit Server (modo dev com credenciais fixas)
+  # ---------------------------------------------------------------------------
+  livekit:
+    image: livekit/livekit-server:v1.7
+    command: >
+      --dev
+      --key devkey:devsecret123456
+      --redis-host redis:6379
+      --bind 0.0.0.0
+    ports:
+      - "7880:7880"    # HTTP API + WebSocket signal
+      - "7881:7881"    # RTC over TCP (fallback)
+      - "7882:7882/udp" # RTC over UDP (preferido)
+    depends_on:
+      redis: { condition: service_healthy }
+
+  # ---------------------------------------------------------------------------
+  # Kafka UI — opcional, facilita debug em dev
+  # ---------------------------------------------------------------------------
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+    ports:
+      - "8090:8080"
+    depends_on:
+      kafka: { condition: service_healthy }
+    profiles:
+      - tools  # só sobe com: docker compose --profile tools up
+
+volumes:
+  postgres-data:
+  go-build-cache:
+  go-pkg-cache:
