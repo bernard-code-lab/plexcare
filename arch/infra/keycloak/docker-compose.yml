@@ -1,0 +1,120 @@
+# Stack de desenvolvimento — Keycloak 26 + Postgres 16
+#
+# Serviços: postgres (Postgres 16) + keycloak (Keycloak 26).
+#
+# Uso:
+#   cp .env.example .env  (e preencher os secrets dos providers)
+#   docker compose up -d --build
+#   ./scripts/configure-providers.sh   (uma vez, para wirear Google/Apple/Facebook)
+#
+# Console admin: http://localhost:8080/auth/admin  (admin/${KC_BOOTSTRAP_ADMIN_PASSWORD})
+# Realm PlexCare: http://localhost:8080/auth/realms/plexcare
+#
+# Em produção: use um override (docker-compose.prod.yml) + reverse proxy com TLS
+# terminação (Caddy/Traefik/ALB) e KC_HOSTNAME apontando para o domínio público.
+
+name: plexcare-keycloak
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: plexcare-keycloak-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${KC_DB_NAME:-keycloak}
+      POSTGRES_USER: ${KC_DB_USERNAME:-keycloak}
+      POSTGRES_PASSWORD: ${KC_DB_PASSWORD:?KC_DB_PASSWORD obrigatório no .env}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${KC_DB_USERNAME:-keycloak} -d ${KC_DB_NAME:-keycloak}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - keycloak_net
+    # Em prod: trocar por um cluster gerenciado (RDS/Cloud SQL). Aqui é só dev.
+    ports:
+      - "127.0.0.1:5433:5432"   # bind apenas no loopback p/ não vazar para a LAN
+
+  keycloak:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        KEYCLOAK_VERSION: ${KEYCLOAK_VERSION:-26.0.7}
+    image: plexcare/keycloak:${KEYCLOAK_VERSION:-26.0.7}
+    container_name: plexcare-keycloak
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # --- Banco ---
+      KC_DB: postgres
+      KC_DB_URL_HOST: postgres
+      KC_DB_URL_PORT: "5432"
+      KC_DB_URL_DATABASE: ${KC_DB_NAME:-keycloak}
+      KC_DB_USERNAME: ${KC_DB_USERNAME:-keycloak}
+      KC_DB_PASSWORD: ${KC_DB_PASSWORD}
+
+      # --- Admin bootstrap (cria o user `admin` no primeiro boot) ---
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_BOOTSTRAP_ADMIN_USERNAME:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_BOOTSTRAP_ADMIN_PASSWORD:?defina KC_BOOTSTRAP_ADMIN_PASSWORD}
+
+      # --- HTTP / hostname (dev: HTTP cleartext, prod: HTTPS no proxy) ---
+      KC_HOSTNAME: ${KC_HOSTNAME:-http://localhost:8080}
+      KC_HOSTNAME_STRICT: "false"
+      KC_HTTP_ENABLED: "true"
+      KC_HTTP_PORT: "8080"
+      KC_HTTP_RELATIVE_PATH: /auth
+      KC_PROXY_HEADERS: xforwarded
+
+      # --- Observabilidade ---
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "true"
+      KC_LOG_LEVEL: ${KC_LOG_LEVEL:-INFO}
+      KC_LOG_CONSOLE_OUTPUT: json
+
+      # --- Identity Providers (lidos pelo configure-providers.sh) ---
+      # Esses não são consumidos diretamente pelo Keycloak — ficam disponíveis
+      # para o script kcadm.sh wirear os IdPs sem hardcode no realm JSON.
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      APPLE_CLIENT_ID: ${APPLE_CLIENT_ID:-}
+      APPLE_CLIENT_SECRET: ${APPLE_CLIENT_SECRET:-}
+      FACEBOOK_CLIENT_ID: ${FACEBOOK_CLIENT_ID:-}
+      FACEBOOK_CLIENT_SECRET: ${FACEBOOK_CLIENT_SECRET:-}
+    command:
+      - start
+      - --optimized
+      - --import-realm
+    ports:
+      - "8080:8080"     # HTTP app
+      - "9000:9000"     # management (health/metrics) — não expor publicamente
+    volumes:
+      - keycloak_data:/opt/keycloak/data
+      - ./scripts:/opt/keycloak/scripts:ro
+    healthcheck:
+      # /health/ready é o probe canônico do KC 26 (porta management 9000)
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000 && echo -e 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && grep -q '\"status\": \"UP\"' <&3"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 90s
+    networks:
+      - keycloak_net
+
+networks:
+  keycloak_net:
+    driver: bridge
+    name: plexcare-keycloak
+
+volumes:
+  postgres_data:
+    name: plexcare-keycloak-pgdata
+  keycloak_data:
+    name: plexcare-keycloak-data
