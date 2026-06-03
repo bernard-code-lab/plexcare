@@ -97,5 +97,3 @@ Reavaliar se:
   - `platform/plexcare-teleconf/internal/room/infrastructure/postgres/room_repository.go` — enforcement no query
 - Memória: [[plexcare-devtenant-security]] · [[plexcare-teleconf-api]]
 - Compliance: LGPD (isolamento de dados pessoais entre tenants), CFM 2.314 (identificação do profissional/paciente — implícita via tenant)
-</content>
-</invoke>

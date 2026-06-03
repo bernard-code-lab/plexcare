@@ -1,15 +1,24 @@
 #!/usr/bin/env bash
 # create-test-room.sh — cria uma sala de teste via room-service e imprime
-# URLs prontas para o browser usando https://meet.livekit.io
+# URLs prontas para o sandbox local em site/ (rota #/sandbox/room).
 #
-# Pré-req: docker compose -f docker-compose.dev.yml up -d
+# Pré-req:
+#   1. Backend:  docker compose -f docker-compose.dev.yml up -d
+#   2. Frontend: cd ../../site && npm run dev   (http://localhost:5173)
+#
 # Uso:     ./scripts/create-test-room.sh
 #          ./scripts/create-test-room.sh --tenant <uuid>
+#
+# Por que NÃO usamos https://meet.livekit.io:
+#   1. Página HTTPS bloqueia ws:// localhost (mixed content) em alguns browsers.
+#   2. Erro de hidratação React (#418) mata os onClick — botões de mic/cam não
+#      respondem. O sandbox local é Vite dev (CSR puro) e não tem o problema.
 
 set -euo pipefail
 
 API_BASE="${API_BASE:-http://localhost:8080}"
 LIVEKIT_WS="${LIVEKIT_WS:-ws://localhost:7880}"
+SITE_BASE="${SITE_BASE:-http://localhost:5173}"
 
 TENANT_ID="${TENANT_ID:-$(uuidgen | tr '[:upper:]' '[:lower:]')}"
 if [[ "${1:-}" == "--tenant" ]] && [[ -n "${2:-}" ]]; then
@@ -19,6 +28,19 @@ fi
 APPOINTMENT="appt-$(date +%s)"
 DOCTOR_ID="doctor_$(uuidgen | tr '[:upper:]' '[:lower:]' | cut -c1-8)"
 PATIENT_ID="patient_$(uuidgen | tr '[:upper:]' '[:lower:]' | cut -c1-8)"
+
+# Pre-flight: confirma que backend e frontend estao no ar antes de gerar a sala.
+if ! curl -sf -o /dev/null "$API_BASE/health"; then
+  echo "ERRO: room-service nao responde em $API_BASE/health" >&2
+  echo "      Rode: docker compose -f docker-compose.dev.yml up -d" >&2
+  exit 1
+fi
+if ! curl -sf -o /dev/null "$SITE_BASE/"; then
+  echo "AVISO: site nao responde em $SITE_BASE — a URL gerada nao vai abrir." >&2
+  echo "       Rode em outro terminal: cd ../../site && npm run dev" >&2
+  echo "       (continuando mesmo assim, mas voce vai precisar subir antes de usar)" >&2
+  echo ""
+fi
 
 echo ">>> Criando sala para tenant=$TENANT_ID appt=$APPOINTMENT"
 
@@ -46,14 +68,18 @@ echo "LiveKit name:  $LIVEKIT_NAME"
 echo "Expira em:     $EXPIRES_AT"
 echo ""
 echo "============================================================"
-echo "Abra cada URL em uma janela/aba DIFERENTE do browser:"
+echo "Abra cada URL em uma janela/aba DIFERENTE do browser."
+echo "Recomendado: navegadores ou perfis distintos (Chrome normal +"
+echo "Chrome incognito) para não compartilhar localStorage."
 echo "============================================================"
 echo ""
-echo "🩺 MÉDICO ($DOCTOR_ID):"
-echo "https://meet.livekit.io/custom?liveKitUrl=$LIVEKIT_WS&token=$HOST_TOKEN"
+echo "Pré-req: site/ rodando em $SITE_BASE (cd ../../site && npm run dev)"
 echo ""
-echo "👤 PACIENTE ($PATIENT_ID):"
-echo "https://meet.livekit.io/custom?liveKitUrl=$LIVEKIT_WS&token=$GUEST_TOKEN"
+echo "MEDICO ($DOCTOR_ID):"
+echo "$SITE_BASE/#/sandbox/room?token=$HOST_TOKEN&url=$LIVEKIT_WS"
+echo ""
+echo "PACIENTE ($PATIENT_ID):"
+echo "$SITE_BASE/#/sandbox/room?token=$GUEST_TOKEN&url=$LIVEKIT_WS"
 echo ""
 echo "============================================================"
 echo "Quando ambos entrarem, observe:"
