@@ -19,8 +19,8 @@ type FinishRoomUseCase struct {
 
 // Interfaces locais para manter o use case testável de forma isolada.
 type roomRepo interface {
-	FindByLiveKitName(ctx context.Context, name string) (*roomEntity, error)
-	Update(ctx context.Context, room *roomEntity) error
+	FindByLiveKitName(ctx context.Context, name string) (roomEntity, error)
+	Update(ctx context.Context, room roomEntity) error
 }
 
 type roomPublisher interface {
@@ -28,6 +28,7 @@ type roomPublisher interface {
 }
 
 // roomEntity é alias interno para domain.Room — evita import cycle em testes unitários.
+// Já é uma interface; usamos por valor (não ponteiro-para-interface).
 type roomEntity = interface{ Finish(at time.Time) error }
 
 type FinishRoomInput struct {

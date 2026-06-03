@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
 	"go.uber.org/zap"
 
 	"plexcare/platform/plexcare-teleconf/internal/metering/domain"
@@ -106,6 +105,9 @@ func (uc *ProcessEventUseCase) handleJoined(ctx context.Context, event Participa
 }
 
 func (uc *ProcessEventUseCase) handleLeft(ctx context.Context, event ParticipantEvent) error {
+	ctx, span := tracer.Start(ctx, "handleLeft")
+	defer span.End()
+
 	session, err := uc.sessions.CloseSession(ctx, event.RoomID, event.ParticipantID, event.OccurredAt)
 	if err != nil {
 		// Pode acontecer se o participant_joined chegou fora de ordem ou foi perdido.
@@ -144,10 +146,7 @@ func (uc *ProcessEventUseCase) handleLeft(ctx context.Context, event Participant
 		)
 	}
 
-	span, _ := tracer.Start(ctx, "noop") // atualiza span com minutos antes de fechar
-	defer span.End()
 	span.SetAttributes(attribute.Int("billable_minutes", minutes))
-	_ = span
 
 	return nil
 }

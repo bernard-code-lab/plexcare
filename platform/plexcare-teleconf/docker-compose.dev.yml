@@ -105,7 +105,7 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
-      KAFKA_CLUSTER_ID: plexcare-dev-cluster-00
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk   # base64-encoded UUID (16B) requerido pelo cp-kafka em KRaft
       KAFKA_LOG_RETENTION_HOURS: 24       # em dev não precisamos de retenção longa
     ports:
       - "9092:9092"
@@ -123,7 +123,7 @@ services:
     image: livekit/livekit-server:v1.7
     command: >
       --dev
-      --key devkey:devsecret123456
+      --keys "devkey: devsecret123456"
       --redis-host redis:6379
       --bind 0.0.0.0
     ports:
