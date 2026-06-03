@@ -1,7 +1,7 @@
 # =============================================================================
 # Stage: deps — baixa módulos Go em camada separada (cache agressivo)
 # =============================================================================
-FROM golang:1.23-alpine AS deps
+FROM golang:1.26-alpine AS deps
 
 WORKDIR /app
 

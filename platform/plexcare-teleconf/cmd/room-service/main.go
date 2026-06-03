@@ -2,22 +2,27 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 
-	// Wiring das infra implementations (a serem criadas na infra layer)
-	// "plexcare/platform/plexcare-teleconf/internal/room/application"
-	// "plexcare/platform/plexcare-teleconf/internal/room/infrastructure/postgres"
-	// "plexcare/platform/plexcare-teleconf/internal/room/infrastructure/livekit"
-	// "plexcare/platform/plexcare-teleconf/internal/room/infrastructure/kafka"
+	"plexcare/platform/plexcare-teleconf/internal/room/application"
+	"plexcare/platform/plexcare-teleconf/internal/room/infrastructure/devtenant"
+	httpadapter "plexcare/platform/plexcare-teleconf/internal/room/infrastructure/http"
+	kafkaadapter "plexcare/platform/plexcare-teleconf/internal/room/infrastructure/kafka"
+	lkadapter "plexcare/platform/plexcare-teleconf/internal/room/infrastructure/livekit"
+	pgadapter "plexcare/platform/plexcare-teleconf/internal/room/infrastructure/postgres"
+	"plexcare/platform/plexcare-teleconf/internal/room/infrastructure/webhookbridge"
 )
 
 func main() {
@@ -26,17 +31,31 @@ func main() {
 
 	cfg := loadConfig()
 
-	// --- Dependency wiring ---
-	// db := postgres.Connect(cfg.DatabaseURL)
-	// lkClient := livekit.NewClient(cfg.LiveKitHost, cfg.LiveKitAPIKey, cfg.LiveKitAPISecret)
-	// tokenGen := livekit.NewTokenGenerator(cfg.LiveKitAPIKey, cfg.LiveKitAPISecret)
-	// publisher := kafka.NewPublisher(cfg.KafkaBrokers)
-	// roomRepo := postgres.NewRoomRepository(db)
+	// --- Infraestrutura -----------------------------------------------------
+	ctx := context.Background()
 
-	// createRoom := application.NewCreateRoomUseCase(roomRepo, lkClient, tokenGen, publisher, log)
-	// finishRoom := application.NewFinishRoomUseCase(roomRepo, publisher, log)
-	// _ = createRoom
-	// _ = finishRoom
+	pool, err := pgxpool.New(ctx, cfg.DatabaseURL)
+	if err != nil {
+		log.Fatal("postgres pool", zap.Error(err))
+	}
+	defer pool.Close()
+
+	roomRepo := pgadapter.NewRoomRepository(pool)
+	lkClient := lkadapter.NewClient(cfg.LiveKitHTTP, cfg.LiveKitAPIKey, cfg.LiveKitAPISecret)
+	tokenGen := lkadapter.NewTokenGenerator(cfg.LiveKitAPIKey, cfg.LiveKitAPISecret)
+	publisher := kafkaadapter.NewPublisher(strings.Split(cfg.KafkaBrokers, ","))
+	defer publisher.Close()
+
+	// --- Use cases ----------------------------------------------------------
+	createRoom := application.NewCreateRoomUseCase(roomRepo, lkClient, tokenGen, publisher, log)
+	finishRoom := application.NewFinishRoomUseCase(roomRepo, publisher, log)
+
+	// --- Webhook bridge -----------------------------------------------------
+	bridge := webhookbridge.New(finishRoom, publisher, log)
+	webhookHandler := lkadapter.NewWebhookHandler(cfg.LiveKitAPIKey, cfg.LiveKitAPISecret, bridge, log)
+
+	// --- HTTP router --------------------------------------------------------
+	resolver := devtenant.New()
 
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
@@ -44,13 +63,19 @@ func main() {
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(30 * time.Second))
 
-	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+	r.Get("/health", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"status":"ok"}`))
+		_ = json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 	})
 
-	// r.Post("/rooms", handler.CreateRoom(createRoom))
-	// r.Delete("/rooms/{roomName}", handler.FinishRoom(finishRoom))
+	// Webhook do LiveKit — fora do middleware de tenant (LiveKit não envia X-Tenant-Id).
+	r.Post("/webhooks/livekit", webhookHandler.ServeHTTP)
+
+	// API pública — protegida por tenant.
+	r.Route("/api/v1", func(r chi.Router) {
+		r.Use(httpadapter.TenantMiddleware(resolver))
+		r.Post("/rooms", httpadapter.CreateRoom(createRoom))
+	})
 
 	srv := &http.Server{
 		Addr:         ":" + cfg.Port,
@@ -72,33 +97,32 @@ func main() {
 	<-quit
 
 	log.Info("shutting down gracefully...")
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
-
-	if err := srv.Shutdown(ctx); err != nil {
+	if err := srv.Shutdown(shutdownCtx); err != nil {
 		log.Error("forced shutdown", zap.Error(err))
 	}
 }
 
 type config struct {
-	Port              string
-	DatabaseURL       string
-	LiveKitHost       string
-	LiveKitAPIKey     string
-	LiveKitAPISecret  string
-	KafkaBrokers      string
-	RedisURL          string
+	Port             string
+	DatabaseURL      string
+	LiveKitHTTP      string
+	LiveKitAPIKey    string
+	LiveKitAPISecret string
+	KafkaBrokers     string
+	RedisURL         string
 }
 
 func loadConfig() config {
 	return config{
 		Port:             getEnv("PORT", "8080"),
 		DatabaseURL:      mustEnv("DATABASE_URL"),
-		LiveKitHost:      mustEnv("LIVEKIT_HOST"),
+		LiveKitHTTP:      getEnv("LIVEKIT_HTTP_URL", "http://livekit:7880"),
 		LiveKitAPIKey:    mustEnv("LIVEKIT_API_KEY"),
 		LiveKitAPISecret: mustEnv("LIVEKIT_API_SECRET"),
-		KafkaBrokers:     getEnv("KAFKA_BROKERS", "localhost:9092"),
-		RedisURL:         getEnv("REDIS_URL", "redis://localhost:6379"),
+		KafkaBrokers:     getEnv("KAFKA_BROKERS", "kafka:9092"),
+		RedisURL:         getEnv("REDIS_URL", "redis://redis:6379"),
 	}
 }
 

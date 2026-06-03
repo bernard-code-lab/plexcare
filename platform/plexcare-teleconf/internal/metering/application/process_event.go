@@ -25,13 +25,14 @@ const (
 
 // ParticipantEvent é o payload consumido do Kafka (topic: room.events).
 // Emitido pelo Webhook Service ao receber eventos do LiveKit.
+// Tags JSON sincronizadas com room/infrastructure/webhookbridge.ParticipantEvent.
 type ParticipantEvent struct {
-	Type            EventType
-	RoomID          string
-	TenantID        string
-	ParticipantID   string
-	ParticipantRole string
-	OccurredAt      time.Time
+	Type            EventType `json:"type"`
+	RoomID          string    `json:"room_id"`
+	TenantID        string    `json:"tenant_id"`
+	ParticipantID   string    `json:"participant_id"`
+	ParticipantRole string    `json:"participant_role"`
+	OccurredAt      time.Time `json:"occurred_at"`
 }
 
 // UsageRecordedEvent é publicado após fechar uma sessão.
