@@ -10,22 +10,26 @@
 
 ```
 plexcare/
-├── site/                              Marketing site (Vite + React 18 + Tailwind)
+├── site/                              Site institucional puro (Vite + React 18 + Tailwind)
 ├── platform/
-│   ├── plexcare-teleconf/             Sala virtual: room, metering, webhooks LiveKit (Go 1.23)
+│   ├── plexcare-teleconf-service/     Backend Go da sala virtual: room, metering, webhooks LiveKit
+│   ├── plexcare-teleconf-web/         App web do produto sala virtual: LiveKit client + waiting room + dashboard
 │   └── plexcare-schedule-api/         Agendamento inteligente (Go 1.23, scaffold)
 └── plexcare_agent_prompts.pdf         Fonte canônica dos 7 agentes Claude
 ```
 
-> **Nota:** O PDF original menciona módulos `plexcare-backend/frontend/infra/sre`. A estrutura real usa `site/` + `platform/plexcare-*`. Os módulos de **infra** (Terraform/EKS/Helm) e **SRE** (Grafana/runbooks) ainda não foram criados — quando forem, irão para `platform/plexcare-infra/` e `platform/plexcare-sre/`.
+> **Importante.** `site/` é estritamente institucional. Toda UI do produto **sala virtual** (login, waiting room, sala LiveKit, histórico) vive em `platform/plexcare-teleconf-web/` e fala com `platform/plexcare-teleconf-service/`. Decisão registrada em [ADR-0003](docs/adr/0003-separacao-site-web-service.md).
+
+> **Nota.** Os módulos de **infra** (Terraform/EKS/Helm) e **SRE** (Grafana/runbooks) ainda não foram criados — quando forem, irão para `platform/plexcare-infra/` e `platform/plexcare-sre/`.
 
 ## Roteiro de pesquisa — siga esta ordem
 
 Para qualquer task neste repo, **sempre nesta ordem** (economiza tokens, evita re-leitura de arquivos):
 
 1. **Leia o `CLAUDE.md` do módulo em que está trabalhando** — cada um lista os 5–7 "load-bearing files" daquele módulo + gotchas:
-   - `site/CLAUDE.md` — landing (Vite/React/Tailwind dark-luxury)
-   - `platform/plexcare-teleconf/CLAUDE.md` — sala virtual Go (room, metering, LiveKit)
+   - `site/CLAUDE.md` — site institucional (Vite/React/Tailwind dark-luxury)
+   - `platform/plexcare-teleconf-service/CLAUDE.md` — backend Go da sala virtual (room, metering, LiveKit)
+   - `platform/plexcare-teleconf-web/CLAUDE.md` — app web da sala virtual (LiveKit client + React Router + TanStack Query)
    - `platform/plexcare-schedule-api/CLAUDE.md` — agendamento (scaffold)
 2. **Consulte memória local** para decisões, gotchas e auth-fakes conhecidos (`MEMORY.md` em `~/.claude/projects/.../memory/`).
 3. **Use `/graphify`** para localizar código antes de `Read` em arquivo inteiro. `Read` direto só nos load-bearing files do módulo ou em arquivos ≤ ~100 linhas.
@@ -114,7 +118,7 @@ Se um requisito conflita com compliance, **pare e levante a questão** antes de 
 
 ## Comandos úteis
 
-### Site (frontend)
+### Site (institucional)
 ```bash
 cd site
 npm install
@@ -123,9 +127,18 @@ npm run build
 npm run preview
 ```
 
-### platform/plexcare-teleconf (backend Go)
+### platform/plexcare-teleconf-web (app do produto)
 ```bash
-cd platform/plexcare-teleconf
+cd platform/plexcare-teleconf-web
+npm install
+cp .env.example .env # ajustar VITE_TELECONF_SERVICE_URL e VITE_LIVEKIT_URL se preciso
+npm run dev          # http://localhost:5174 (porta fixa — não colide com site)
+npm run build
+```
+
+### platform/plexcare-teleconf-service (backend Go)
+```bash
+cd platform/plexcare-teleconf-service
 docker compose -f docker-compose.dev.yml up -d   # infra + serviços
 go test ./...                                     # roda todos os testes
 go test -run TestRoomService_CreateRoom ./...    # roda um teste específico
@@ -147,7 +160,8 @@ Para a lista completa de arquivos canônicos **por módulo**, leia o `CLAUDE.md`
 |---|---|
 | `CLAUDE.md` (raiz) | Este arquivo — contexto global, compliance |
 | `site/CLAUDE.md` | Load-bearing do site + design tokens reais |
-| `platform/plexcare-teleconf/CLAUDE.md` | Load-bearing teleconf + gotchas LiveKit/Kafka |
+| `platform/plexcare-teleconf-service/CLAUDE.md` | Load-bearing backend teleconf + gotchas LiveKit/Kafka |
+| `platform/plexcare-teleconf-web/CLAUDE.md` | Load-bearing app web + gotchas LiveKit no client + CSP |
 | `platform/plexcare-schedule-api/CLAUDE.md` | Status scaffold + domínios planejados |
 | `site/docs/ONBOARDING.md` | Onboarding completo com arquitetura e SLOs |
 | `docs/adr/` | Architecture Decision Records — leia antes de propor mudança grande |
@@ -159,6 +173,7 @@ Antes de propor mudança em fila, tenancy, auth, banco ou protocolo, **leia o AD
 
 - [ADR-0001](docs/adr/0001-kafka-como-event-bus-interno.md) — Kafka como event bus interno
 - [ADR-0002](docs/adr/0002-multi-tenancy-via-header-context.md) — Multi-tenancy via header + `context.Context`
+- [ADR-0003](docs/adr/0003-separacao-site-web-service.md) — Separação `site` / `teleconf-web` / `teleconf-service`
 
 Para criar ADR novo: copie `docs/adr/template.md` ou invoque `/adr`.
 

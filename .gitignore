@@ -27,3 +27,5 @@ dist-ssr/
 
 # AI tools
 .cursor/rules/codacy.mdc
+
+plataform/plexcare-teleconf/tmp/
