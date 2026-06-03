@@ -1,7 +1,7 @@
 # =============================================================================
 # Stage: deps — baixa módulos Go em camada separada (cache agressivo)
 # =============================================================================
-FROM golang:1.23-alpine AS deps
+FROM golang:1.26-alpine AS deps
 
 WORKDIR /app
 
@@ -15,7 +15,7 @@ RUN go mod download && go mod verify
 # =============================================================================
 FROM deps AS dev
 
-RUN go install github.com/air-verse/air@latest
+RUN go install github.com/air-verse/air@v1.61.7
 
 # Air espera o código via volume mount. Configuração lida do .air.toml.
 # O SERVICE arg define qual cmd/ buildar.

@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
 	"go.uber.org/zap"
 
 	"plexcare/platform/plexcare-teleconf/internal/metering/domain"
@@ -26,13 +25,14 @@ const (
 
 // ParticipantEvent é o payload consumido do Kafka (topic: room.events).
 // Emitido pelo Webhook Service ao receber eventos do LiveKit.
+// Tags JSON sincronizadas com room/infrastructure/webhookbridge.ParticipantEvent.
 type ParticipantEvent struct {
-	Type            EventType
-	RoomID          string
-	TenantID        string
-	ParticipantID   string
-	ParticipantRole string
-	OccurredAt      time.Time
+	Type            EventType `json:"type"`
+	RoomID          string    `json:"room_id"`
+	TenantID        string    `json:"tenant_id"`
+	ParticipantID   string    `json:"participant_id"`
+	ParticipantRole string    `json:"participant_role"`
+	OccurredAt      time.Time `json:"occurred_at"`
 }
 
 // UsageRecordedEvent é publicado após fechar uma sessão.
@@ -106,6 +106,9 @@ func (uc *ProcessEventUseCase) handleJoined(ctx context.Context, event Participa
 }
 
 func (uc *ProcessEventUseCase) handleLeft(ctx context.Context, event ParticipantEvent) error {
+	ctx, span := tracer.Start(ctx, "handleLeft")
+	defer span.End()
+
 	session, err := uc.sessions.CloseSession(ctx, event.RoomID, event.ParticipantID, event.OccurredAt)
 	if err != nil {
 		// Pode acontecer se o participant_joined chegou fora de ordem ou foi perdido.
@@ -144,10 +147,7 @@ func (uc *ProcessEventUseCase) handleLeft(ctx context.Context, event Participant
 		)
 	}
 
-	span, _ := tracer.Start(ctx, "noop") // atualiza span com minutos antes de fechar
-	defer span.End()
 	span.SetAttributes(attribute.Int("billable_minutes", minutes))
-	_ = span
 
 	return nil
 }

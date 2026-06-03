@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS participant_sessions (
 );
 
 CREATE INDEX idx_sessions_room           ON participant_sessions (room_id);
-CREATE INDEX idx_sessions_tenant_period  ON participant_sessions (tenant_id, date_trunc('month', joined_at));
+CREATE INDEX idx_sessions_tenant_period  ON participant_sessions (tenant_id, (date_trunc('month', joined_at AT TIME ZONE 'UTC')));
 CREATE INDEX idx_sessions_active         ON participant_sessions (room_id, participant_id) WHERE left_at IS NULL;
 
 -- Agregado mensal — lido pelo Billing Service para gerar faturas
