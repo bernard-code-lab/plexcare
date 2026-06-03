@@ -41,5 +41,3 @@ ADRs vivem aqui no repo (não em Notion/Confluence) porque viajam com o código 
 2. Use o slash command `/adr` se quiser que o Claude rascunhe (invoca o Solutions Architect).
 3. Abra PR para discussão antes de marcar `Accepted`.
 4. Atualize o index acima.
-</content>
-</invoke>

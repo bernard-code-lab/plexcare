@@ -49,5 +49,3 @@ Em que condição esta decisão deveria ser reavaliada? Ex: "se latência p99 do
 - Issue/PR relacionado: #NN
 - Documentação: ...
 - Memória: [[nome-da-memoria]]
-</content>
-</invoke>

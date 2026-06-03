@@ -148,6 +148,11 @@ Três pegadinhas já corrigidas no `docker-compose.dev.yml` mas que reaparecem e
 
 3. **`air@latest` exige Go ≥ 1.26** (v1.65+). Para Go 1.23, pinar `air@v1.61.7`. Neste módulo a base já é `golang:1.26-alpine` (livekit/protocol exige).
 
+4. **NÃO usar `https://meet.livekit.io` para smoke test.** Dois bugs combinados:
+   - Página HTTPS bloqueia `ws://localhost:7880` por mixed content em alguns browsers.
+   - React error #418 (hidratação SSR) mata os `onClick` — botões de mic/câmera renderizam mas não respondem, e a conexão WS aborta no unmount.
+   Use o sandbox local em `site/` (rota `#/sandbox/room`). `./scripts/create-test-room.sh` já imprime as URLs corretas — basta rodar `cd site && npm run dev` antes.
+
 Ao criar `platform/plexcare-infra/` (issue #13) e portar para Terraform/Helm, replicar os 3 padrões — especialmente dual listener no MSK.
 
 ## Comandos

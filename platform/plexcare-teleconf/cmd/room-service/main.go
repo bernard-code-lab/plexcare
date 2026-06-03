@@ -51,7 +51,7 @@ func main() {
 	finishRoom := application.NewFinishRoomUseCase(roomRepo, publisher, log)
 
 	// --- Webhook bridge -----------------------------------------------------
-	bridge := webhookbridge.New(finishRoom, publisher, log)
+	bridge := webhookbridge.New(finishRoom, publisher, roomRepo, log)
 	webhookHandler := lkadapter.NewWebhookHandler(cfg.LiveKitAPIKey, cfg.LiveKitAPISecret, bridge, log)
 
 	// --- HTTP router --------------------------------------------------------

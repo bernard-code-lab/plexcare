@@ -93,5 +93,3 @@ Reavaliar se:
 - Código: `platform/plexcare-teleconf/internal/room/infrastructure/kafka/publisher.go`
 - Memória: [[plexcare-livekit-dev-gotchas]]
 - Stack local: `platform/plexcare-teleconf/docker-compose.dev.yml`
-</content>
-</invoke>
