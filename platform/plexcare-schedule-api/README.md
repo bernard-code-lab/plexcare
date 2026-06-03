@@ -33,7 +33,7 @@ plexcare-schedule-api/
 ## Desenvolvimento Local
 
 ```bash
-# Ainda nao implementado — use como referencia a estrutura do plexcare-teleconf
-cd ../plexcare-teleconf
+# Ainda nao implementado — use como referencia a estrutura do plexcare-teleconf-service
+cd ../plexcare-teleconf-service
 cat docker-compose.dev.yml
 ```

@@ -20,7 +20,7 @@ São os "load-bearing files" do site. Cobrem composição, design tokens e compo
 - Para "onde está o componente X?" → use `/graphify` primeiro. `Read` em arquivo inteiro só depois de localizar.
 - Para token de cor / espaçamento → SEMPRE `tailwind.config.js` + `src/index.css`. Nunca chute hex.
 - `site/sandbox/` (raiz, NÃO `src/sandbox/`) contém scaffolds antigos (`plexcare-backend/frontend/infra/sre`) — **ignore** ao buscar código real.
-- `src/sandbox/RoomSandbox.jsx` é o **único** sandbox vivo — rota `#/sandbox/room?token=...&url=...` para smoke test de sala LiveKit. Guard `import.meta.env.PROD` desabilita em prod. Não confundir com `site/sandbox/`.
+- **Sala virtual NÃO mora aqui.** O `src/sandbox/RoomSandbox.jsx` foi movido para `platform/plexcare-teleconf-web/` (porta 5174). Este site é institucional puro — sem deps LiveKit. Para smoke test de sala: `cd ../platform/plexcare-teleconf-web && npm run dev`.
 
 ## O que é
 

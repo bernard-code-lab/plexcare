@@ -22,11 +22,14 @@ Inovando em plataformas web e mobile, produtos:
 plexcare/
   README.md
   plexcare_agent_prompts.pdf        Prompts dos 7 agentes Claude
-  site/                             Marketing site
+  site/                             Marketing site institucional (Vite + React)
   platform/
-    plexcare-teleconf/              Sala virtual (room, metering, webhooks)
-    plexcare-schedule-api/          Agendamento inteligente
+    plexcare-teleconf-service/      Backend Go da sala virtual (room, metering, webhooks)
+    plexcare-teleconf-web/          App web do produto sala virtual (Vite + React + LiveKit)
+    plexcare-schedule-api/          API de agendamento inteligente
 ```
+
+> **Importante.** `site/` é estritamente institucional. Toda interface do produto **sala virtual** (login do médico, waiting room, sala LiveKit, histórico) vive em `platform/plexcare-teleconf-web/` e fala com `platform/plexcare-teleconf-service/`. Ver [ADR-0003](docs/adr/0003-separacao-site-web-service.md).
 
 ## Taxonomia de Artefatos
 
@@ -40,19 +43,20 @@ plexcare-<contexto>-<tipo>
 |---|---|---|
 | `plexcare-` | Prefixo fixo do produto | — |
 | `<contexto>` | Dominio de negocio do artefato | `teleconf`, `schedule`, `billing`, `auth` |
-| `<tipo>` | Natureza tecnica (quando aplicavel) | `api`, `worker`, `job`, `bff`, `sdk` |
+| `<tipo>` | Natureza tecnica do artefato | `service`, `web`, `api`, `worker`, `job`, `bff`, `sdk` |
 
 ### Exemplos validos
 
 | Artefato | O que faz |
 |---|---|
-| `plexcare-teleconf` | Sala virtual — room service, metering, webhooks LiveKit |
+| `plexcare-teleconf-service` | Backend Go da sala virtual — room, metering, webhooks LiveKit |
+| `plexcare-teleconf-web` | App web do produto sala virtual — LiveKit client, waiting room, dashboard |
 | `plexcare-schedule-api` | API REST de agendamento inteligente |
 | `plexcare-billing-worker` | Consumer Kafka para processar eventos de billing |
 | `plexcare-auth-api` | Servico de autenticacao e autorizacao multi-tenant |
 | `plexcare-egress-job` | Job de gravacao e upload para S3 |
 
-> Quando o artefato cobre o dominio inteiro (ex: `plexcare-teleconf`), o `<tipo>` e omitido.
+> Domínios com mais de uma face (backend + UI) usam sufixos pareados — `-service` para backend, `-web` para interface web. Não publicar artefato sem `<tipo>`.
 
 ### Estrutura interna de cada artefato Go
 
@@ -76,7 +80,7 @@ plexcare-<nome>/
 
 | Camada | Tecnologias |
 |---|---|
-| **Site** | Vite + React 18 + TypeScript, Tailwind CSS, shadcn/ui, Framer Motion |
+| **Site / Web app** | Vite + React 18, Tailwind CSS, shadcn/ui, Framer Motion (`plexcare-teleconf-web` adiciona LiveKit Client + React Router + TanStack Query) |
 | **Backend** | Go 1.23, chi, pgx, zap, OpenTelemetry |
 | **Media** | LiveKit SFU (Go + Pion), coturn (TURN), Egress → S3 |
 | **Data** | PostgreSQL, Redis, Kafka/SQS |
