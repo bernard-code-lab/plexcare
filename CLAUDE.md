@@ -19,6 +19,20 @@ plexcare/
 
 > **Nota:** O PDF original menciona módulos `plexcare-backend/frontend/infra/sre`. A estrutura real usa `site/` + `platform/plexcare-*`. Os módulos de **infra** (Terraform/EKS/Helm) e **SRE** (Grafana/runbooks) ainda não foram criados — quando forem, irão para `platform/plexcare-infra/` e `platform/plexcare-sre/`.
 
+## Roteiro de pesquisa — siga esta ordem
+
+Para qualquer task neste repo, **sempre nesta ordem** (economiza tokens, evita re-leitura de arquivos):
+
+1. **Leia o `CLAUDE.md` do módulo em que está trabalhando** — cada um lista os 5–7 "load-bearing files" daquele módulo + gotchas:
+   - `site/CLAUDE.md` — landing (Vite/React/Tailwind dark-luxury)
+   - `platform/plexcare-teleconf/CLAUDE.md` — sala virtual Go (room, metering, LiveKit)
+   - `platform/plexcare-schedule-api/CLAUDE.md` — agendamento (scaffold)
+2. **Consulte memória local** para decisões, gotchas e auth-fakes conhecidos (`MEMORY.md` em `~/.claude/projects/.../memory/`).
+3. **Use `/graphify`** para localizar código antes de `Read` em arquivo inteiro. `Read` direto só nos load-bearing files do módulo ou em arquivos ≤ ~100 linhas.
+4. **Só depois** abra arquivos novos. Se descobrir algo não-óbvio (gotcha, decisão, atalho), atualize o `CLAUDE.md` do módulo ou crie uma memória.
+
+> Tradução prática: nunca rode `ls` + `Read` de exploração se o `CLAUDE.md` do módulo já responde.
+
 ## Stack canônica
 
 | Camada | Tecnologias |
@@ -125,17 +139,28 @@ git log --oneline -10
 gh pr create --title "..." --body "..."
 ```
 
-## Arquivos-chave
+## Arquivos-chave (cross-cutting)
+
+Para a lista completa de arquivos canônicos **por módulo**, leia o `CLAUDE.md` daquele módulo (seção "Antes de explorar o código"). Esta tabela cobre só o que atravessa o monorepo:
 
 | Caminho | Descrição |
 |---|---|
-| `site/src/App.jsx` | Composição da landing |
-| `site/src/index.css` | Design tokens (teal/dourado, dark-luxury) |
-| `site/tailwind.config.js` | Tema customizado |
-| `platform/plexcare-teleconf/internal/room/domain/room.go` | Entidade Room |
-| `platform/plexcare-teleconf/pkg/tenant/context.go` | Propagação multi-tenant |
-| `platform/plexcare-teleconf/docker-compose.dev.yml` | Stack local |
+| `CLAUDE.md` (raiz) | Este arquivo — contexto global, compliance |
+| `site/CLAUDE.md` | Load-bearing do site + design tokens reais |
+| `platform/plexcare-teleconf/CLAUDE.md` | Load-bearing teleconf + gotchas LiveKit/Kafka |
+| `platform/plexcare-schedule-api/CLAUDE.md` | Status scaffold + domínios planejados |
 | `site/docs/ONBOARDING.md` | Onboarding completo com arquitetura e SLOs |
+| `docs/adr/` | Architecture Decision Records — leia antes de propor mudança grande |
+| `plexcare_agent_prompts.pdf` | Fonte canônica dos 7 agentes Claude |
+
+## Decisões arquiteturais registradas (ADRs)
+
+Antes de propor mudança em fila, tenancy, auth, banco ou protocolo, **leia o ADR correspondente** em `docs/adr/`:
+
+- [ADR-0001](docs/adr/0001-kafka-como-event-bus-interno.md) — Kafka como event bus interno
+- [ADR-0002](docs/adr/0002-multi-tenancy-via-header-context.md) — Multi-tenancy via header + `context.Context`
+
+Para criar ADR novo: copie `docs/adr/template.md` ou invoque `/adr`.
 
 ## Como pedir ajuda ao Claude neste repo
 

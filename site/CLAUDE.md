@@ -2,6 +2,25 @@
 
 > Carregado quando Claude trabalha em `site/**`. Veja também `../CLAUDE.md` (raiz) para contexto do produto.
 
+## Antes de explorar o código — leia estes 6 arquivos
+
+São os "load-bearing files" do site. Cobrem composição, design tokens e componentes-fundação. Qualquer task de UI começa por aqui:
+
+| Arquivo | Por que importa |
+|---|---|
+| `src/App.jsx` | Composição da landing — ordem das seções e provider |
+| `src/index.css` | Design tokens, fontes, animações com `prefers-reduced-motion` |
+| `tailwind.config.js` | Cores reais, sombras, keyframes — fonte da verdade do tema |
+| `src/lib/utils.js` | Helper `cn()` (clsx + tailwind-merge) usado em **toda** classe |
+| `src/components/primitives.jsx` | Building blocks compartilhados (containers, headings) |
+| `src/components/ui/aurora-background.jsx` | Background ambiente — referencia `var(--<cor>)` injetadas pelo Tailwind plugin |
+
+## Pesquisa antes de ler
+
+- Para "onde está o componente X?" → use `/graphify` primeiro. `Read` em arquivo inteiro só depois de localizar.
+- Para token de cor / espaçamento → SEMPRE `tailwind.config.js` + `src/index.css`. Nunca chute hex.
+- `site/sandbox/` contém scaffolds antigos (`plexcare-backend/frontend/infra/sre`) — **ignore** ao buscar código real.
+
 ## O que é
 
 Landing page de marketing da **Agenda Inteligente** (agendamento multicanal Google/iOS/WhatsApp + IA anti-no-show) para médicos, clínicas e advogados no Brasil. Não é o app SaaS — é o site público de aquisição.
@@ -38,16 +57,38 @@ site/
 
 ## Design system — não quebre
 
-| Token | Valor |
-|---|---|
-| Cor primária | teal `#14B8A6` e variações |
-| Cor destaque | dourado/amber `#E3B341` |
-| Fundo | quase-preto `#020807`, `#0D1117` |
-| Títulos | Cabinet Grotesk |
-| Corpo | Switzer |
-| Efeitos | film grain, vignette, aurora-background |
+**Cores reais** (extraídas do `tailwind.config.js` — fonte da verdade):
 
-Detalhes completos em `tailwind.config.js` e `src/index.css`. Qualquer nova tela respeita esses tokens.
+| Token | Valor | Uso |
+|---|---|---|
+| `bg-background` / `ink-950` | `#04100E` | Fundo principal (dark-luxury) |
+| `ink-900` / `ink-800` / `ink-700` | `#061613` → `#0E2A25` | Camadas de profundidade |
+| `text-foreground` / `cream` | `#E9F4F1` | Corpo de texto |
+| `text-mute` | `#8AA8A1` | Texto secundário |
+| `teal-400` (primary) | `#2DD4BF` | CTA, foco, ring |
+| `teal-500` | `#14B8A6` | Hover/destaque secundário |
+| `gold-500` / `gold-400` | `#E09E1F` / `#F2B53B` | Acento dourado |
+| `border` / `input` | `#15362F` | Bordas em superfícies escuras |
+
+**Tipografia:** `font-display` = Cabinet Grotesk (títulos), `font-sans` = Switzer (corpo).
+**Sombras assinatura:** `shadow-glow` (halo teal), `shadow-card` (depth interna).
+**Efeitos:** film grain, vignette, `AuroraBackground` (componente custom).
+
+Qualquer nova tela usa as classes Tailwind acima — **nunca** hex inline.
+
+## Componentes custom não-óbvios
+
+Estes UI components em `src/components/ui/` **não são shadcn padrão** — são autorais e têm contratos específicos:
+
+| Componente | Comportamento |
+|---|---|
+| `aurora-background.jsx` | Background ambient via gradients animados; depende do plugin `addVariablesForColors` no Tailwind |
+| `illuminated-hero.jsx` | Hero com spotlight + parallax; checa `prefers-reduced-motion` |
+| `calendar-scheduler.jsx` | Demo interativo de agendamento (não é o produto real) — usa `react-day-picker` + `date-fns` |
+| `glow-menu.jsx` | Menu com indicador animado entre items |
+| `call-to-action-cta.jsx` | CTA principal — variantes via `cva` |
+
+Componentes padrão shadcn (`button`, `card`, `input`, `avatar`, `calendar`) seguem o esperado.
 
 ## Convenções
 

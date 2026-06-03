@@ -53,7 +53,7 @@ platform/plexcare-schedule-api/
 
 1. Invoque `/solutions-architect` com a pergunta arquitetural específica
 2. Depois `/software-engineer` para gerar o domínio em TDD
-3. Copie o esqueleto do `plexcare-teleconf` (Dockerfile, docker-compose, .air.toml, pkg/tenant, pkg/telemetry)
+3. Copie o esqueleto do `plexcare-teleconf` (Dockerfile, docker-compose, .air.toml, `pkg/tenant`) — OTel setup vive em cada `cmd/*/main.go`, não em `pkg/telemetry`
 
 ## Convenções
 
