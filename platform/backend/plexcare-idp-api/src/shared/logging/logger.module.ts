@@ -16,6 +16,10 @@ export const REDACT_PATHS = [
   'private_jwk_encrypted',
   'kek',
   'JWKS_KEK_DEV',
+  // LGPD — never log raw PII even if accidentally passed.
+  'customer_document',
+  '*.customer_document',
+  'PII_HASH_PEPPER',
 ];
 
 function buildPinoParams(): Params {

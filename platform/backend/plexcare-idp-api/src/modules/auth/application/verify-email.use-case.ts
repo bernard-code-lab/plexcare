@@ -3,6 +3,7 @@ import { decodeJwt } from 'jose';
 import { PrismaService } from '../../../shared/prisma/prisma.service';
 import { OutboxService } from '../../outbox/outbox.service';
 import { AppException } from '../../../shared/errors/app-exception';
+import { hashEmail } from '../../../shared/auth/pii';
 
 /**
  * The verification token is a Keycloak action-token. We decode it locally
@@ -40,7 +41,9 @@ export class VerifyEmailUseCase {
       subject: `idp_user/${user.id}`,
       data: {
         idp_user_id: user.id.toString(),
-        email: user.login,
+        // LGPD: hash on the bus; the API response below keeps the email
+        // because the caller is the verified user themselves.
+        email_hash: hashEmail(user.login),
         verified_at: new Date().toISOString(),
       },
     });

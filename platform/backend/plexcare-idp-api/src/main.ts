@@ -1,3 +1,7 @@
+// MUST be first: OpenTelemetry auto-instrumentation needs to patch http/
+// fastify/pino/prisma BEFORE any module requires them.
+import './shared/otel/instrument';
+
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';

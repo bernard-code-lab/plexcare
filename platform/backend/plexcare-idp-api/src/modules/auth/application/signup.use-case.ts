@@ -5,6 +5,7 @@ import { KeycloakService } from '../../keycloak/keycloak.service';
 import { AppException } from '../../../shared/errors/app-exception';
 import { validatePassword } from '../../../shared/auth/password-policy';
 import { isValidDocument } from '../../../shared/auth/document-validator';
+import { hashDocument, hashEmail } from '../../../shared/auth/pii';
 import type { SignupRequest } from '../dto/signup.dto';
 
 export interface SignupResult {
@@ -55,8 +56,10 @@ export class SignupUseCase {
         data: {
           idp_user_id: created.id.toString(),
           keycloak_user_id: kcUserId,
-          email: input.email,
-          customer_document: doc.digits,
+          // LGPD: never publish raw email/CPF on the bus. Consumers that need
+          // the email do an authenticated lookup. See shared/auth/pii.ts.
+          email_hash: hashEmail(input.email),
+          customer_document_hash: hashDocument(doc.digits),
           person_type: personType,
           signup_client_id: input.client_id,
           signup_ip: signupIp ?? null,
