@@ -12,7 +12,7 @@ SHELL := /usr/bin/env bash
 # ---------- Caminhos canônicos ----------
 TELECONF_DIR  := platform/backend/plexcare-teleconf-service
 IDP_DIR       := platform/backend/plexcare-idp-api
-WEB_DIR       := platform/plexcare-teleconf-web
+WEB_DIR       := platform/frontend/plexcare-teleconf-web
 SITE_DIR      := site
 
 # ---------- Docker Compose ----------
@@ -83,6 +83,14 @@ up: ## [STACK] Sobe stack completa (teleconf + idp)
 	@$(MAKE) -s teleconf-up
 	@$(MAKE) -s idp-up
 	@$(MAKE) -s status
+
+.PHONY: up-product
+up-product: ## [STACK] Sobe TUDO para usar o produto de teleconferencia (docker stack + teleconf-web em bg)
+	@scripts/up-product.sh
+
+.PHONY: down-product
+down-product: ## [STACK] Derruba o produto de teleconferencia (teleconf-web bg + docker stack)
+	@scripts/down-product.sh
 
 .PHONY: down
 down: ## [STACK] Derruba toda a stack (preserva volumes nomeados)

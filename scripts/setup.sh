@@ -14,7 +14,7 @@ readonly RESET=$'\033[0m'
 
 readonly TELECONF_DIR="platform/backend/plexcare-teleconf-service"
 readonly IDP_DIR="platform/backend/plexcare-idp-api"
-readonly WEB_DIR="platform/plexcare-teleconf-web"
+readonly WEB_DIR="platform/frontend/plexcare-teleconf-web"
 readonly SITE_DIR="site"
 
 step() {

@@ -29,3 +29,6 @@ dist-ssr/
 .cursor/rules/codacy.mdc
 
 plataform/plexcare-teleconf/tmp/
+
+# Runtime artifacts produzidos por scripts/up-product.sh
+tmp/

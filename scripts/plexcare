@@ -43,6 +43,8 @@ run_action() {
   case "${action}" in
     setup)            make -s setup ;;
     doctor)           make -s doctor ;;
+    up-product)       make -s up-product ;;
+    down-product)     make -s down-product ;;
     up)               make -s up ;;
     down)             make -s down ;;
     restart)          make -s restart ;;
@@ -67,6 +69,10 @@ run_action() {
 declare -a MENU_LABELS=(
   "Setup completo (instalar tudo)"
   "Doctor (verifica ferramentas + portas)"
+  "─── PRODUTO TELECONFERENCIA ─────"
+  "🚀 UP — subir tudo para usar (docker + web)"
+  "🛑 DOWN — derrubar tudo do produto"
+  "─── STACK BAIXO NIVEL ───────────"
   "Subir stack Docker (teleconf + idp)"
   "Derrubar stack"
   "Reiniciar stack"
@@ -78,8 +84,8 @@ declare -a MENU_LABELS=(
   "Rodar testes do idp-api"
   "Rodar testes do teleconf-service"
   "─── DEV (watch) ─────────────────"
-  "Subir teleconf-web (porta 5174)"
-  "Subir idp-api (porta 4000)"
+  "Subir teleconf-web (porta 5174, foreground)"
+  "Subir idp-api (porta 4000, foreground)"
   "─── UTIL ────────────────────────"
   "Abrir Swagger UI (idp-api)"
   "Abrir MailHog (emails de dev)"
@@ -92,6 +98,10 @@ declare -a MENU_LABELS=(
 declare -a MENU_ACTIONS=(
   "setup"
   "doctor"
+  ""
+  "up-product"
+  "down-product"
+  ""
   "up"
   "down"
   "restart"
