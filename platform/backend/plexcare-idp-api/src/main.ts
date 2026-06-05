@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import helmet from '@fastify/helmet';
+import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module';
 
 async function bootstrap(): Promise<void> {
@@ -11,6 +12,7 @@ async function bootstrap(): Promise<void> {
     { bufferLogs: true },
   );
 
+  app.useLogger(app.get(Logger));
   await app.register(helmet, { contentSecurityPolicy: false });
 
   const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS ?? '')
