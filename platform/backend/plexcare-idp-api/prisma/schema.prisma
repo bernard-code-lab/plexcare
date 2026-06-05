@@ -1,3 +1,18 @@
+// =============================================================================
+// plexcare-idp-api — Prisma schema
+//
+// Conexão: db_plexcare_tenancy (MySQL 8).
+// Tabelas existentes (account, idp_user, authorize_state, outbox, lockout,
+// employee, client, client_profile) são mapeadas — Prisma NÃO gera migration
+// para elas. As 6 novas (idp_user_role, idp_session, idp_signing_key,
+// idp_client, idp_cron_lock, idp_idempotency) têm migration explícita em
+// prisma/migrations/.
+//
+// Pré-requisito de execução: carregar db_plexcare_tenancy.sql antes do
+// `prisma migrate deploy`. Em dev: docker compose + load do dump.
+// Em CI/Testcontainers: o setup executa o dump → migrate deploy.
+// =============================================================================
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -5,4 +20,205 @@ generator client {
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
+}
+
+// -----------------------------------------------------------------------------
+// Tabelas EXISTENTES (mapeadas, sem migration).
+// -----------------------------------------------------------------------------
+
+model Account {
+  id         BigInt @id @default(autoincrement()) @db.UnsignedBigInt
+  customerId BigInt @map("customer_id") @db.UnsignedBigInt
+
+  idpUsers     IdpUser[]
+  idpUserRoles IdpUserRole[]
+  employees    Employee[]
+  clients      Client[]
+
+  @@unique([id, customerId], map: "uq_account_id_customer")
+  @@index([customerId], map: "ix_account_customer_id")
+  @@map("account")
+}
+
+model IdpUser {
+  id                BigInt @id @default(autoincrement()) @db.UnsignedBigInt
+  login             String @db.VarChar(255)
+  keycloakUserId    String @unique(map: "uq_idp_user_keycloak") @map("keycloak_user_id") @db.VarChar(64)
+  accountId         BigInt @map("account_id") @db.UnsignedBigInt
+  accountCustomerId BigInt @map("account_customer_id") @db.UnsignedBigInt
+
+  account  Account       @relation(fields: [accountId, accountCustomerId], references: [id, customerId], onDelete: Cascade, map: "fk_idp_user_account")
+  roles    IdpUserRole[]
+  sessions IdpSession[]
+
+  @@index([accountId, accountCustomerId], map: "fk_idp_user_account")
+  @@map("idp_user")
+}
+
+model AuthorizeState {
+  state         String   @id @db.VarChar(96)
+  audience      String   @db.VarChar(64)
+  pkceChallenge String   @map("pkce_challenge") @db.VarChar(128)
+  pkceMethod    String   @map("pkce_method") @db.VarChar(8)
+  redirectUri   String   @map("redirect_uri") @db.VarChar(2048)
+  nonce         String   @db.VarChar(96)
+  createdAt     DateTime @default(now()) @map("created_at") @db.DateTime(3)
+  expiresAt     DateTime @map("expires_at") @db.DateTime(3)
+
+  @@index([expiresAt], map: "idx_authorize_state_expires")
+  @@map("authorize_state")
+}
+
+model Outbox {
+  id          BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  eventId     String    @unique(map: "uk_outbox_event_id") @map("event_id") @db.Char(36)
+  type        String    @db.VarChar(128)
+  payload     Json
+  occurredAt  DateTime  @map("occurred_at") @db.DateTime(3)
+  enqueuedAt  DateTime  @default(now()) @map("enqueued_at") @db.DateTime(3)
+  publishedAt DateTime? @map("published_at") @db.DateTime(3)
+  attempts    Int       @default(0) @db.UnsignedInt
+  lastError   String?   @map("last_error") @db.Text
+
+  @@index([publishedAt, enqueuedAt], map: "idx_outbox_unpublished")
+  @@map("outbox")
+}
+
+model Lockout {
+  keyName      String   @id @map("key_name") @db.VarChar(128)
+  failuresJson Json     @map("failures_json")
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.DateTime(3)
+
+  @@map("lockout")
+}
+
+model Employee {
+  id         BigInt @id @default(autoincrement()) @db.UnsignedBigInt
+  accountId  BigInt @map("account_id") @db.UnsignedBigInt
+  customerId BigInt @map("customer_id") @db.UnsignedBigInt
+
+  account Account @relation(fields: [accountId, customerId], references: [id, customerId], onDelete: Cascade, map: "fk_employee_account")
+
+  @@index([customerId], map: "ix_employee_customer")
+  @@index([accountId, customerId], map: "fk_employee_account")
+  @@map("employee")
+}
+
+model Client {
+  id                BigInt  @id @default(autoincrement()) @db.UnsignedBigInt
+  customerId        BigInt  @map("customer_id") @db.UnsignedBigInt
+  accountId         BigInt  @map("account_id") @db.UnsignedBigInt
+  accountCustomerId BigInt  @map("account_customer_id") @db.UnsignedBigInt
+  clientProfileId   BigInt? @map("client_profile_id") @db.UnsignedBigInt
+
+  account       Account        @relation(fields: [accountId, accountCustomerId], references: [id, customerId], onDelete: Cascade, map: "fk_client_account")
+  clientProfile ClientProfile? @relation(fields: [clientProfileId], references: [id], onDelete: SetNull, map: "fk_client_client_profile")
+
+  @@index([clientProfileId], map: "fk_client_client_profile")
+  @@index([accountId, accountCustomerId], map: "fk_client_account")
+  @@map("client")
+}
+
+model ClientProfile {
+  id     BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  mobile String?  @db.VarChar(32)
+  email  String?  @db.VarChar(255)
+  clients Client[]
+
+  @@map("client_profile")
+}
+
+// -----------------------------------------------------------------------------
+// Tabelas NOVAS (com migration).
+// -----------------------------------------------------------------------------
+
+model IdpUserRole {
+  id                BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  idpUserId         BigInt    @map("idp_user_id") @db.UnsignedBigInt
+  accountId         BigInt    @map("account_id") @db.UnsignedBigInt
+  accountCustomerId BigInt    @map("account_customer_id") @db.UnsignedBigInt
+  role              String    @db.VarChar(64)
+  doctorId          BigInt?   @map("doctor_id") @db.UnsignedBigInt
+  clientId          BigInt?   @map("client_id") @db.UnsignedBigInt
+  employeeId        BigInt?   @map("employee_id") @db.UnsignedBigInt
+  createdAt         DateTime  @default(now()) @map("created_at") @db.DateTime(3)
+  revokedAt         DateTime? @map("revoked_at") @db.DateTime(3)
+
+  idpUser IdpUser @relation(fields: [idpUserId], references: [id], onDelete: Cascade, map: "fk_idp_user_role_idp_user")
+  account Account @relation(fields: [accountId, accountCustomerId], references: [id, customerId], onDelete: Cascade, map: "fk_idp_user_role_account")
+
+  @@unique([idpUserId, accountId, role], map: "uq_idp_user_role")
+  @@index([idpUserId], map: "fk_idp_user_role_idp_user")
+  @@index([accountId, accountCustomerId], map: "fk_idp_user_role_account")
+  @@map("idp_user_role")
+}
+
+model IdpSession {
+  id           String    @id @db.Char(36)
+  idpUserId    BigInt    @map("idp_user_id") @db.UnsignedBigInt
+  accountId    BigInt    @map("account_id") @db.UnsignedBigInt
+  clientId     String    @map("client_id") @db.VarChar(64)
+  userAgent    String?   @map("user_agent") @db.VarChar(512)
+  ipAddress    String?   @map("ip_address") @db.VarChar(64)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.DateTime(3)
+  lastUsedAt   DateTime  @default(now()) @map("last_used_at") @db.DateTime(3)
+  expiresAt    DateTime  @map("expires_at") @db.DateTime(3)
+  revokedAt    DateTime? @map("revoked_at") @db.DateTime(3)
+  revokeReason String?   @map("revoke_reason") @db.VarChar(64)
+
+  idpUser IdpUser @relation(fields: [idpUserId], references: [id], onDelete: Cascade, map: "fk_idp_session_user")
+
+  @@index([idpUserId], map: "idx_idp_session_user")
+  @@index([expiresAt], map: "idx_idp_session_expires")
+  @@map("idp_session")
+}
+
+model IdpSigningKey {
+  kid                  String    @id @db.VarChar(64)
+  alg                  String    @default("EdDSA") @db.VarChar(16)
+  publicJwk            Json      @map("public_jwk")
+  privateJwkEncrypted  Bytes     @map("private_jwk_encrypted") @db.Blob
+  status               String    @db.VarChar(16)
+  createdAt            DateTime  @default(now()) @map("created_at") @db.DateTime(3)
+  rotatedAt            DateTime? @map("rotated_at") @db.DateTime(3)
+
+  @@index([status], map: "idx_idp_key_status")
+  @@map("idp_signing_key")
+}
+
+model IdpClient {
+  clientId                String   @id @map("client_id") @db.VarChar(64)
+  name                    String   @db.VarChar(255)
+  audience                String   @db.VarChar(64)
+  redirectUris            Json     @map("redirect_uris")
+  allowedGrants           Json     @map("allowed_grants")
+  pkceRequired            Boolean  @default(true) @map("pkce_required") @db.TinyInt
+  confidential            Boolean  @default(false) @db.TinyInt
+  secretHash              String?  @map("secret_hash") @db.VarChar(255)
+  accessTokenTtlSeconds   Int      @default(900) @map("access_token_ttl_seconds")
+  refreshTokenTtlSeconds  Int      @default(2592000) @map("refresh_token_ttl_seconds")
+  createdAt               DateTime @default(now()) @map("created_at") @db.DateTime(3)
+
+  @@map("idp_client")
+}
+
+model IdpCronLock {
+  name      String   @id @db.VarChar(64)
+  holder    String?  @db.VarChar(255)
+  expiresAt DateTime @map("expires_at") @db.DateTime(3)
+
+  @@map("idp_cron_lock")
+}
+
+model IdpIdempotency {
+  key            String   @db.VarChar(128)
+  route          String   @db.VarChar(128)
+  responseStatus Int      @map("response_status") @db.SmallInt
+  responseBody   Json?    @map("response_body")
+  createdAt      DateTime @default(now()) @map("created_at") @db.DateTime(3)
+  expiresAt      DateTime @map("expires_at") @db.DateTime(3)
+
+  @@id([key, route])
+  @@index([expiresAt])
+  @@map("idp_idempotency")
 }
