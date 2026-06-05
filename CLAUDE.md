@@ -25,6 +25,8 @@ plexcare/
 
 > **Nota.** Os módulos de **infra** (Terraform/EKS/Helm) e **SRE** (Grafana/runbooks) ainda não foram criados — quando forem, irão para `platform/plexcare-infra/` e `platform/plexcare-sre/`.
 
+> **⚠️ Gotcha: refatoração de paths com stack Docker em execução.** Containers Docker memorizam o `working_dir` do compose nos labels. Mover ou renomear um diretório de serviço **com a stack rodando** deixa os containers em loop de `Restarting` com `open .air.toml: no such file or directory` e erros silenciosos de DNS para outros serviços (`lookup kafka: no such host`). **Antes de mover qualquer `platform/**/docker-compose*.yml`:** derrube primeiro com `docker compose -p <project-name> down` e suba do path novo com `docker compose -f <novo>/docker-compose.dev.yml -p <project-name> up -d`. Volumes nomeados (`postgres-data`, `go-build-cache`) são preservados — só os containers são recriados.
+
 ## Roteiro de pesquisa — siga esta ordem
 
 Para qualquer task neste repo, **sempre nesta ordem** (economiza tokens, evita re-leitura de arquivos):
