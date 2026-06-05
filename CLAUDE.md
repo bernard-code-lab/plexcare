@@ -10,12 +10,15 @@
 
 ```
 plexcare/
-├── site/                              Site institucional puro (Vite + React 18 + Tailwind)
+├── site/                                          Site institucional puro (Vite + React 18 + Tailwind)
 ├── platform/
-│   ├── plexcare-teleconf-service/     Backend Go da sala virtual: room, metering, webhooks LiveKit
-│   ├── plexcare-teleconf-web/         App web do produto sala virtual: LiveKit client + waiting room + dashboard
-│   └── plexcare-schedule-api/         Agendamento inteligente (Go 1.23, scaffold)
-└── plexcare_agent_prompts.pdf         Fonte canônica dos 7 agentes Claude
+│   ├── backend/
+│   │   ├── plexcare-idp-api/                     Authorization Server (NestJS + Prisma + MySQL)
+│   │   ├── plexcare-teleconf-service/            Backend Go da sala virtual
+│   │   └── plexcare-schedule-api/                Agendamento inteligente (Go 1.23, scaffold)
+│   ├── frontend/                                  (web apps fora de site/)
+│   └── database/                                  SQL dumps versionados (db_plexcare_*.sql)
+└── plexcare_agent_prompts.pdf                     Fonte canônica dos 7 agentes Claude
 ```
 
 > **Importante.** `site/` é estritamente institucional. Toda UI do produto **sala virtual** (login, waiting room, sala LiveKit, histórico) vive em `platform/plexcare-teleconf-web/` e fala com `platform/plexcare-teleconf-service/`. Decisão registrada em [ADR-0003](docs/adr/0003-separacao-site-web-service.md).
@@ -28,9 +31,10 @@ Para qualquer task neste repo, **sempre nesta ordem** (economiza tokens, evita r
 
 1. **Leia o `CLAUDE.md` do módulo em que está trabalhando** — cada um lista os 5–7 "load-bearing files" daquele módulo + gotchas:
    - `site/CLAUDE.md` — site institucional (Vite/React/Tailwind dark-luxury)
-   - `platform/plexcare-teleconf-service/CLAUDE.md` — backend Go da sala virtual (room, metering, LiveKit)
+   - `platform/backend/plexcare-idp-api/CLAUDE.md` — Authorization Server (NestJS + Prisma + MySQL; JWT Ed25519 + KC oculto)
+   - `platform/backend/plexcare-teleconf-service/CLAUDE.md` — backend Go da sala virtual (room, metering, LiveKit)
    - `platform/plexcare-teleconf-web/CLAUDE.md` — app web da sala virtual (LiveKit client + React Router + TanStack Query)
-   - `platform/plexcare-schedule-api/CLAUDE.md` — agendamento (scaffold)
+   - `platform/backend/plexcare-schedule-api/CLAUDE.md` — agendamento (scaffold)
 2. **Consulte memória local** para decisões, gotchas e auth-fakes conhecidos (`MEMORY.md` em `~/.claude/projects/.../memory/`).
 3. **Use `/graphify`** para localizar código antes de `Read` em arquivo inteiro. `Read` direto só nos load-bearing files do módulo ou em arquivos ≤ ~100 linhas.
 4. **Só depois** abra arquivos novos. Se descobrir algo não-óbvio (gotcha, decisão, atalho), atualize o `CLAUDE.md` do módulo ou crie uma memória.
@@ -136,13 +140,27 @@ npm run dev          # http://localhost:5174 (porta fixa — não colide com sit
 npm run build
 ```
 
-### platform/plexcare-teleconf-service (backend Go)
+### platform/backend/plexcare-teleconf-service (backend Go)
 ```bash
-cd platform/plexcare-teleconf-service
+cd platform/backend/plexcare-teleconf-service
 docker compose -f docker-compose.dev.yml up -d   # infra + serviços
 go test ./...                                     # roda todos os testes
 go test -run TestRoomService_CreateRoom ./...    # roda um teste específico
 go test -cover ./internal/...                     # cobertura do domínio
+```
+
+### platform/backend/plexcare-idp-api (Authorization Server)
+```bash
+cd platform/backend/plexcare-idp-api
+docker compose -f docker-compose.dev.yml up -d   # MySQL + MailHog
+# Keycloak/Kafka vêm da stack do teleconf-service — suba-a antes
+cp .env.example .env                              # ajustar JWKS_KEK_DEV (32 bytes base64)
+npm install
+npm run prisma:generate
+npm run prisma:migrate                            # aplica as 6 migrations IdP
+npm run prisma:seed                               # idp_client + signing key inicial
+npm run dev                                       # http://localhost:4000 (Swagger UI em /docs)
+npm test                                          # unit + integration (Docker p/ Testcontainers)
 ```
 
 ### Workflow Git
@@ -174,6 +192,8 @@ Antes de propor mudança em fila, tenancy, auth, banco ou protocolo, **leia o AD
 - [ADR-0001](docs/adr/0001-kafka-como-event-bus-interno.md) — Kafka como event bus interno
 - [ADR-0002](docs/adr/0002-multi-tenancy-via-header-context.md) — Multi-tenancy via header + `context.Context`
 - [ADR-0003](docs/adr/0003-separacao-site-web-service.md) — Separação `site` / `teleconf-web` / `teleconf-service`
+- [ADR-0004](docs/adr/0004-idp-proprio-keycloak-oculto.md) — IdP próprio com Keycloak oculto
+- [ADR-0005](docs/adr/0005-outbox-worker-poll.md) — Outbox transacional + worker poll para Kafka
 
 Para criar ADR novo: copie `docs/adr/template.md` ou invoque `/adr`.
 
