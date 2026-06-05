@@ -3,7 +3,9 @@ import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import helmet from '@fastify/helmet';
 import { Logger } from 'nestjs-pino';
+import { SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { buildOpenApiDocument } from './openapi/openapi.builder';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -14,6 +16,9 @@ async function bootstrap(): Promise<void> {
 
   app.useLogger(app.get(Logger));
   await app.register(helmet, { contentSecurityPolicy: false });
+
+  const doc = buildOpenApiDocument();
+  SwaggerModule.setup('docs', app, doc, { jsonDocumentUrl: 'openapi.json' });
 
   const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS ?? '')
     .split(',')
