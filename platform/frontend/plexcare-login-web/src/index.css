@@ -1,0 +1,119 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+* {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply text-cream font-sans;
+  margin: 0;
+  overflow-x: hidden;
+  background-color: #04100e;
+  background-image: linear-gradient(180deg, #08201b 0%, #051410 34%, #04100e 100%);
+}
+
+::selection {
+  background: rgba(45, 212, 191, 0.28);
+  color: #eafbf7;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #061613;
+}
+::-webkit-scrollbar-thumb {
+  background: #0b766d;
+  border-radius: 999px;
+  border: 3px solid #061613;
+}
+
+@layer components {
+  .container-page {
+    @apply mx-auto w-full max-w-page px-5 sm:px-8;
+  }
+
+  .eyebrow {
+    @apply inline-flex items-center gap-2 rounded-full border border-teal-400/20 bg-teal-400/[0.06]
+      px-3.5 py-1.5 text-[0.72rem] font-medium uppercase tracking-[0.18em] text-teal-200;
+  }
+
+  .display {
+    @apply font-display font-semibold leading-[1.03];
+    letter-spacing: 0;
+    word-spacing: 0.06em;
+  }
+
+  /* Frosted-glass surface: usado nos cards de auth. */
+  .glass {
+    background: linear-gradient(
+      155deg,
+      rgba(255, 255, 255, 0.05) 0%,
+      rgba(255, 255, 255, 0.018) 42%,
+      rgba(13, 148, 136, 0.04) 100%
+    );
+    border: 1px solid rgba(150, 240, 222, 0.1);
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.09),
+      inset 0 0 24px -12px rgba(150, 240, 222, 0.12);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+
+  .btn-primary {
+    @apply relative inline-flex items-center justify-center gap-2 rounded-full px-6 py-3.5
+      text-[0.95rem] font-medium text-ink-950 transition-transform duration-200
+      hover:-translate-y-0.5 active:translate-y-0 cursor-pointer;
+    background: linear-gradient(180deg, #5eead4 0%, #2dd4bf 55%, #0d9488 100%);
+    box-shadow:
+      0 1px 0 0 rgba(255, 255, 255, 0.4) inset,
+      0 18px 40px -18px rgba(45, 212, 191, 0.75);
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-white/10
+      bg-white/[0.03] px-6 py-3.5 text-[0.95rem] font-medium text-cream
+      transition-colors duration-200 hover:border-teal-300/40 hover:bg-white/[0.06] cursor-pointer;
+  }
+}
+
+.grain {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 240 240' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+}
+
+.text-gradient {
+  background: linear-gradient(96deg, #eafbf7 0%, #5eead4 38%, #2dd4bf 64%, #f2b53b 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.text-gradient-gold {
+  background: linear-gradient(94deg, #5eead4 0%, #f2b53b 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

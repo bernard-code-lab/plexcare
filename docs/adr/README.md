@@ -34,6 +34,9 @@ ADRs vivem aqui no repo (não em Notion/Confluence) porque viajam com o código 
 |---|---|---|---|
 | [ADR-0001](0001-kafka-como-event-bus-interno.md) | Kafka como event bus interno | Accepted | 2026-06-02 |
 | [ADR-0002](0002-multi-tenancy-via-header-context.md) | Multi-tenancy via header `X-Tenant-Id` propagado por `context.Context` | Accepted (com migração JWT planejada) | 2026-06-02 |
+| [ADR-0003](0003-separacao-site-web-service.md) | Separação `site` / `teleconf-web` / `teleconf-service` | Accepted | 2026-06-03 |
+| [ADR-0004](0004-idp-proprio-keycloak-oculto.md) | IdP próprio com Keycloak oculto | Accepted | 2026-06-05 |
+| [ADR-0005](0005-outbox-worker-poll.md) | Outbox transacional + worker poll para Kafka | Accepted | 2026-06-05 |
 
 ## Como criar um ADR novo
 
