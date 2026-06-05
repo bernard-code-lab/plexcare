@@ -106,6 +106,32 @@ describe('JwtSignerService', () => {
     expect(claims.kid).toBe(active.kid);
   });
 
+  it('verify accepts when expectedAudience matches', async () => {
+    const { token } = await signer.sign(baseClaims, 900);
+    const claims = await signer.verify(token, 'plexcare-platform-web');
+    expect(claims.sub).toBe('1');
+  });
+
+  it('verify accepts when expectedAudience list includes the token aud', async () => {
+    const { token } = await signer.sign(baseClaims, 900);
+    const claims = await signer.verify(token, ['other-client', 'plexcare-platform-web']);
+    expect(claims.sub).toBe('1');
+  });
+
+  it('verify REJECTS when expectedAudience does not match token aud (P0-2)', async () => {
+    const { token } = await signer.sign(baseClaims, 900);
+    await expect(signer.verify(token, 'attacker-client')).rejects.toMatchObject({
+      code: 'token_invalid',
+    });
+  });
+
+  it('verify REJECTS when token aud is not in expectedAudience list (P0-2)', async () => {
+    const { token } = await signer.sign(baseClaims, 900);
+    await expect(
+      signer.verify(token, ['plexcare-mobile', 'other-cli']),
+    ).rejects.toMatchObject({ code: 'token_invalid' });
+  });
+
   it('verify rejects token signed with unknown kid', async () => {
     const otherKey = await generateEd25519Key();
     const priv = await importJWK(otherKey.privateJwk, ALG);

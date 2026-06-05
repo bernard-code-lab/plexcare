@@ -64,7 +64,16 @@ export class JwtSignerService {
     return { token: jwt, kid: active.kid, jti, iat, exp };
   }
 
-  async verify(jwt: string): Promise<JWTPayload & { kid: string }> {
+  /**
+   * Verify a JWT. When `expectedAudience` is provided, the token is rejected
+   * unless its `aud` claim matches one of the provided values. Callers serving
+   * authenticated requests MUST pass the set of valid audiences (typically the
+   * registered `idp_client` list) to prevent cross-client token reuse.
+   */
+  async verify(
+    jwt: string,
+    expectedAudience?: string | string[],
+  ): Promise<JWTPayload & { kid: string }> {
     let header: ReturnType<typeof decodeProtectedHeader>;
     try {
       header = decodeProtectedHeader(jwt);
@@ -90,6 +99,7 @@ export class JwtSignerService {
       const { payload } = await jwtVerify(jwt, resolved.key, {
         algorithms: [ALG],
         issuer: this.env.get('ISSUER_URL'),
+        ...(expectedAudience !== undefined ? { audience: expectedAudience } : {}),
       });
       return { ...payload, kid: header.kid };
     } catch (err) {

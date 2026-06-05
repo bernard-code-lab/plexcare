@@ -10,6 +10,10 @@ export interface CreateStateInput {
   method: 'S256';
   redirectUri: string;
   nonce?: string;
+  /** Authenticated user id captured by /v1/auth/login (required for /v1/token issuance). */
+  idpUserId: bigint;
+  /** Snapshot of email_verified at login time. */
+  emailVerified: boolean;
 }
 
 export interface CreateStateResult {
@@ -23,6 +27,9 @@ export interface ConsumedState {
   audience: string;
   redirectUri: string;
   nonce: string;
+  /** Authenticated user identity carried from /v1/auth/login. */
+  idpUserId: bigint;
+  emailVerified: boolean;
 }
 
 export function generateUrlSafe(bytes: number): string {
@@ -64,6 +71,8 @@ export class PkceService {
         pkceMethod: input.method,
         redirectUri: input.redirectUri,
         nonce: input.nonce ?? '',
+        idpUserId: input.idpUserId,
+        emailVerified: input.emailVerified,
         expiresAt,
       },
     });
@@ -97,10 +106,17 @@ export class PkceService {
       // Lost a concurrent race — another caller already consumed this state.
       throw new AppException('pkce_state_invalid', { detail: 'state consumed by concurrent caller' });
     }
+    if (row.idpUserId === null) {
+      // Legacy / migration safety net: states created before the idp_user_id
+      // column are not usable for token issuance.
+      throw new AppException('pkce_state_invalid', { detail: 'state predates idp_user binding' });
+    }
     return {
       audience: row.audience,
       redirectUri: row.redirectUri,
       nonce: row.nonce,
+      idpUserId: row.idpUserId,
+      emailVerified: row.emailVerified ?? false,
     };
   }
 }

@@ -1,12 +1,20 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import type { FastifyRequest } from 'fastify';
 import { JwtSignerService } from '../crypto/jwt-signer.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { AppException } from '../errors/app-exception';
 import type { CurrentUserCtx } from './current-user';
 
+const AUDIENCE_CACHE_TTL_MS = 60_000;
+
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
-  constructor(private readonly signer: JwtSignerService) {}
+  private audienceCache: { loadedAt: number; values: string[] } | null = null;
+
+  constructor(
+    private readonly signer: JwtSignerService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context
@@ -21,7 +29,12 @@ export class JwtAuthGuard implements CanActivate {
       throw new AppException('token_invalid', { detail: 'Expected "Bearer <jwt>"' });
     }
 
-    const claims = await this.signer.verify(token);
+    const audiences = await this.loadAudiences();
+    if (audiences.length === 0) {
+      // Fail closed: no registered clients means no token can be trusted here.
+      throw new AppException('token_invalid', { detail: 'No registered audiences' });
+    }
+    const claims = await this.signer.verify(token, audiences);
     const sub = typeof claims.sub === 'string' ? BigInt(claims.sub) : 0n;
     if (sub === 0n) throw new AppException('token_invalid', { detail: 'sub missing' });
 
@@ -38,5 +51,18 @@ export class JwtAuthGuard implements CanActivate {
       kid: claims.kid,
     };
     return true;
+  }
+
+  private async loadAudiences(): Promise<string[]> {
+    if (this.audienceCache && Date.now() - this.audienceCache.loadedAt < AUDIENCE_CACHE_TTL_MS) {
+      return this.audienceCache.values;
+    }
+    const rows = await this.prisma.idpClient.findMany({ select: { clientId: true, audience: true } });
+    // Accept either the literal client_id or the configured audience — both
+    // appear as `aud` in tokens issued by this IdP (audience is set from the
+    // client's `audience` column, see TokenController.exchange).
+    const values = Array.from(new Set(rows.flatMap((r) => [r.clientId, r.audience])));
+    this.audienceCache = { loadedAt: Date.now(), values };
+    return values;
   }
 }

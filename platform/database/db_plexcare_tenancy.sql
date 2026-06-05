@@ -383,6 +383,18 @@ CREATE TABLE IF NOT EXISTS `idp_cron_lock` (
   PRIMARY KEY (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Migration 20260605000001 — bind authorize_state row to the authenticated
+-- idp_user (closes auth-bypass in /v1/token issuance). Applied idempotently
+-- via dynamic SQL so the dump is safe to load on any DB state.
+SET @col_exists := (
+  SELECT COUNT(*) FROM information_schema.columns
+  WHERE table_schema = DATABASE() AND table_name = 'authorize_state' AND column_name = 'idp_user_id'
+);
+SET @stmt := IF(@col_exists = 0,
+  'ALTER TABLE `authorize_state` ADD COLUMN `idp_user_id` BIGINT UNSIGNED NULL AFTER `nonce`, ADD COLUMN `email_verified` TINYINT(1) NULL AFTER `idp_user_id`, ADD KEY `idx_authorize_state_idp_user` (`idp_user_id`)',
+  'SELECT 1');
+PREPARE s FROM @stmt; EXECUTE s; DEALLOCATE PREPARE s;
+
 CREATE TABLE IF NOT EXISTS `idp_idempotency` (
   `key` VARCHAR(128) NOT NULL,
   `route` VARCHAR(128) NOT NULL,

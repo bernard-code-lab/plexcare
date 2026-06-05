@@ -33,24 +33,23 @@ export class ExchangeCodeUseCase {
     const client = await this.prisma.idpClient.findUnique({ where: { clientId: input.client_id } });
     if (!client) throw new AppException('pkce_state_invalid', { detail: 'Unknown client_id' });
 
-    const accountIdBig = input.account_id ? BigInt(input.account_id) : undefined;
-    const { active, all } = await this.roleResolver.resolveActive({
-      idpUserId: await this.lookupIdpUserIdFromAudience(consumed.audience),
-      ...(accountIdBig !== undefined ? { requestedAccountId: accountIdBig } : {}),
-    });
-
-    const idpUser = await this.prisma.idpUser.findFirst({
-      where: { accountId: active.accountId, accountCustomerId: active.accountCustomerId },
-      orderBy: { id: 'asc' },
-    });
+    // The authenticated user identity was bound to the PKCE state at /v1/auth/login.
+    // We trust that value as authoritative — never re-derive from heuristics.
+    const idpUser = await this.prisma.idpUser.findUnique({ where: { id: consumed.idpUserId } });
     if (!idpUser) {
       throw new AppException('me_no_active_role', { detail: 'idp_user row not found' });
     }
 
+    const accountIdBig = input.account_id ? BigInt(input.account_id) : undefined;
+    const { active, all } = await this.roleResolver.resolveActive({
+      idpUserId: idpUser.id,
+      ...(accountIdBig !== undefined ? { requestedAccountId: accountIdBig } : {}),
+    });
+
     const claimsBase = {
       idpUserId: idpUser.id,
       email: idpUser.login,
-      emailVerified: true, // login flow already enforced this
+      emailVerified: consumed.emailVerified,
       clientId: input.client_id,
       audience: client.audience,
       active,
@@ -80,18 +79,5 @@ export class ExchangeCodeUseCase {
       expires_in: client.accessTokenTtlSeconds,
       scope: 'openid profile email',
     };
-  }
-
-  /**
-   * In a multi-user environment, audience alone is insufficient. The PKCE
-   * state is created in /login with the user already authenticated by KC, so
-   * a real implementation would carry the idp_user_id through the PKCE row.
-   * For now we look up the most recent idp_user — placeholder until the
-   * authorize_state schema is extended with idp_user_id (TODO future migration).
-   */
-  private async lookupIdpUserIdFromAudience(_audience: string): Promise<bigint> {
-    const u = await this.prisma.idpUser.findFirst({ orderBy: { id: 'desc' } });
-    if (!u) throw new AppException('me_no_active_role', { detail: 'No idp_user found' });
-    return u.id;
   }
 }

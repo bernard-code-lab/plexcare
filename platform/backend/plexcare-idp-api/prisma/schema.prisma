@@ -56,16 +56,19 @@ model IdpUser {
 }
 
 model AuthorizeState {
-  state         String   @id @db.VarChar(96)
-  audience      String   @db.VarChar(64)
-  pkceChallenge String   @map("pkce_challenge") @db.VarChar(128)
-  pkceMethod    String   @map("pkce_method") @db.VarChar(8)
-  redirectUri   String   @map("redirect_uri") @db.VarChar(2048)
-  nonce         String   @db.VarChar(96)
-  createdAt     DateTime @default(now()) @map("created_at") @db.DateTime(3)
-  expiresAt     DateTime @map("expires_at") @db.DateTime(3)
+  state          String    @id @db.VarChar(96)
+  audience       String    @db.VarChar(64)
+  pkceChallenge  String    @map("pkce_challenge") @db.VarChar(128)
+  pkceMethod     String    @map("pkce_method") @db.VarChar(8)
+  redirectUri    String    @map("redirect_uri") @db.VarChar(2048)
+  nonce          String    @db.VarChar(96)
+  idpUserId      BigInt?   @map("idp_user_id") @db.UnsignedBigInt
+  emailVerified  Boolean?  @map("email_verified") @db.TinyInt
+  createdAt      DateTime  @default(now()) @map("created_at") @db.DateTime(3)
+  expiresAt      DateTime  @map("expires_at") @db.DateTime(3)
 
   @@index([expiresAt], map: "idx_authorize_state_expires")
+  @@index([idpUserId], map: "idx_authorize_state_idp_user")
   @@map("authorize_state")
 }
 

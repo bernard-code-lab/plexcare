@@ -49,8 +49,9 @@ export class LoginUseCase {
     }
 
     // 3) Validate password against KC.
+    let grant: Awaited<ReturnType<typeof this.kc.directGrant>>;
     try {
-      const grant = await this.kc.directGrant(input.email, input.password);
+      grant = await this.kc.directGrant(input.email, input.password);
       if (!grant.emailVerified) {
         loginTotal.inc({ result: 'email_not_verified' });
         throw new AppException('login_email_not_verified');
@@ -79,7 +80,19 @@ export class LoginUseCase {
       throw e;
     }
 
-    // 4) Success — reset lockout + emit PKCE state + code.
+    // 4) Resolve the local idp_user behind the KC user (required to bind the
+    //    PKCE state to a specific user — closes the auth bypass where
+    //    /v1/token used the latest registered user).
+    const idpUser = await this.prisma.idpUser.findUnique({
+      where: { keycloakUserId: grant.kcUserId },
+    });
+    if (!idpUser) {
+      throw new AppException('login_invalid_credentials', {
+        detail: 'KC user has no matching idp_user row — onboarding incomplete',
+      });
+    }
+
+    // 5) Success — reset lockout + emit PKCE state + code (bound to idp_user).
     await this.lockout.reset(emailKey);
     const created = await this.pkce.createState({
       audience: client.audience,
@@ -87,6 +100,8 @@ export class LoginUseCase {
       method: 'S256',
       redirectUri: input.redirect_uri,
       nonce: input.nonce ?? '',
+      idpUserId: idpUser.id,
+      emailVerified: grant.emailVerified,
     });
     loginTotal.inc({ result: 'success' });
     return { code: created.code, state: input.state, redirect_uri: input.redirect_uri };

@@ -38,9 +38,12 @@ describeIfDocker('PkceService (integration)', () => {
         pkce_method VARCHAR(8) NOT NULL,
         redirect_uri VARCHAR(2048) NOT NULL,
         nonce VARCHAR(96) NOT NULL,
+        idp_user_id BIGINT UNSIGNED NULL,
+        email_verified TINYINT(1) NULL,
         created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
         expires_at DATETIME(3) NOT NULL,
-        KEY idx_authorize_state_expires (expires_at)
+        KEY idx_authorize_state_expires (expires_at),
+        KEY idx_authorize_state_idp_user (idp_user_id)
       ) ENGINE=InnoDB
     `);
     svc = new PkceService(prisma as never, env);
@@ -64,6 +67,8 @@ describeIfDocker('PkceService (integration)', () => {
       method: 'S256',
       redirectUri: 'http://localhost:5176/callback',
       nonce: 'n-1',
+      idpUserId: 1n,
+      emailVerified: true,
     });
     expect(out.state.length).toBeGreaterThanOrEqual(32);
     expect(out.code.length).toBeGreaterThanOrEqual(43);
@@ -81,15 +86,41 @@ describeIfDocker('PkceService (integration)', () => {
       method: 'S256',
       redirectUri: 'http://localhost:5176/callback',
       nonce: 'n-x',
+      idpUserId: 42n,
+      emailVerified: true,
     });
     const consumed = await svc.consumeState(code, verifier);
     expect(consumed).toMatchObject({
       audience: 'plexcare-platform-web',
       redirectUri: 'http://localhost:5176/callback',
       nonce: 'n-x',
+      idpUserId: 42n,
+      emailVerified: true,
     });
     const row = await prisma.authorizeState.findUnique({ where: { state: code } });
     expect(row).toBeNull();
+  });
+
+  it('consumeState rejects state row without idp_user_id (legacy/migration safety) (P0-1)', async () => {
+    const verifier = generateUrlSafe(48);
+    const code = generateUrlSafe(32);
+    // Simulate a legacy row created before the migration: idp_user_id NULL.
+    await prisma.authorizeState.create({
+      data: {
+        state: code,
+        audience: 'a',
+        pkceChallenge: sha256B64Url(verifier),
+        pkceMethod: 'S256',
+        redirectUri: 'http://localhost',
+        nonce: '',
+        idpUserId: null,
+        expiresAt: new Date(Date.now() + 60_000),
+      },
+    });
+    await expect(svc.consumeState(code, verifier)).rejects.toMatchObject({
+      code: 'pkce_state_invalid',
+      detail: expect.stringMatching(/idp_user binding/),
+    });
   });
 
   it('consumeState rejects unknown code → pkce_state_invalid', async () => {
@@ -105,6 +136,8 @@ describeIfDocker('PkceService (integration)', () => {
       challenge: sha256B64Url(verifier),
       method: 'S256',
       redirectUri: 'http://localhost',
+      idpUserId: 1n,
+      emailVerified: true,
     });
     await expect(svc.consumeState(code, 'wrong-verifier')).rejects.toMatchObject({
       code: 'pkce_verifier_mismatch',
@@ -140,6 +173,8 @@ describeIfDocker('PkceService (integration)', () => {
       challenge: sha256B64Url(verifier),
       method: 'S256',
       redirectUri: 'http://localhost',
+      idpUserId: 1n,
+      emailVerified: true,
     });
     const results = await Promise.allSettled([
       svc.consumeState(code, verifier),
