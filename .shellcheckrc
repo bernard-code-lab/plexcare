@@ -1,0 +1,7 @@
+# Project-wide ShellCheck config.
+# All scripts under scripts/ and platform/**/scripts/ are validated by `make lint-sh`.
+shell=bash
+external-sources=true
+enable=avoid-nullary-conditions,require-variable-braces,check-unassigned-uppercase
+# SC1091 — "not following sourced files": false-positives across our helper layout.
+disable=SC1091

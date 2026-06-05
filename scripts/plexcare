@@ -1,0 +1,163 @@
+#!/usr/bin/env bash
+# plexcare — menu interativo para tarefas comuns do monorepo.
+# Atalho: `make menu`.
+set -Eeuo pipefail
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "${REPO_ROOT}"
+
+# ---------- cores ----------
+readonly BOLD=$'\033[1m'
+readonly CYAN=$'\033[0;36m'
+readonly GREEN=$'\033[0;32m'
+readonly YELL=$'\033[0;33m'
+readonly RED=$'\033[0;31m'
+readonly DIM=$'\033[2m'
+readonly RESET=$'\033[0m'
+
+clear_screen() {
+  if [[ -t 1 ]]; then clear || true; fi
+}
+
+banner() {
+  printf "\n%s%sPlexCare%s%s — Dev Menu%s\n" "${BOLD}" "${CYAN}" "${RESET}" "${BOLD}" "${RESET}"
+  printf "%sRepo:%s %s\n" "${DIM}" "${RESET}" "${REPO_ROOT}"
+  printf "%sStack:%s plexcare-platform-dev | plexcare-idp-dev\n\n" "${DIM}" "${RESET}"
+}
+
+ask_continue() {
+  printf "\n%sEnter para voltar ao menu...%s" "${DIM}" "${RESET}"
+  read -r _
+}
+
+show_status() {
+  printf "\n%s%sContainers ativos%s\n" "${BOLD}" "${CYAN}" "${RESET}"
+  if ! docker ps --filter "name=plexcare" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" 2>/dev/null; then
+    printf "%snenhum container PlexCare ativo%s\n" "${YELL}" "${RESET}"
+  fi
+}
+
+run_action() {
+  local action="$1"
+  printf "\n%s▶ %s%s\n\n" "${CYAN}" "${action}" "${RESET}"
+  case "${action}" in
+    setup)            make -s setup ;;
+    doctor)           make -s doctor ;;
+    up)               make -s up ;;
+    down)             make -s down ;;
+    restart)          make -s restart ;;
+    status)           show_status ;;
+    logs)             make -s logs ;;
+    test-rooms)       make -s test-rooms ;;
+    test-rooms-flow)  make -s test-rooms-flow ;;
+    test-idp)         make -s test-idp ;;
+    test-teleconf)    make -s test-teleconf ;;
+    lint)             make -s lint ;;
+    open-swagger)     make -s open-swagger ;;
+    open-mailhog)     make -s open-mailhog ;;
+    open-kafka-ui)    make -s open-kafka-ui ;;
+    dev-web)          make -s dev-web ;;
+    dev-idp)          make -s dev-idp ;;
+    nuke)             make -s nuke ;;
+    *) printf "%saction desconhecida: %s%s\n" "${RED}" "${action}" "${RESET}"; return 1 ;;
+  esac
+}
+
+# ---------- itens do menu ----------
+declare -a MENU_LABELS=(
+  "Setup completo (instalar tudo)"
+  "Doctor (verifica ferramentas + portas)"
+  "Subir stack Docker (teleconf + idp)"
+  "Derrubar stack"
+  "Reiniciar stack"
+  "Status dos containers"
+  "Tail de logs (teleconf)"
+  "─── TESTES ──────────────────────"
+  "Testar sala virtual (UI no browser)"
+  "Testar sala virtual (fluxo completo, sem UI)"
+  "Rodar testes do idp-api"
+  "Rodar testes do teleconf-service"
+  "─── DEV (watch) ─────────────────"
+  "Subir teleconf-web (porta 5174)"
+  "Subir idp-api (porta 4000)"
+  "─── UTIL ────────────────────────"
+  "Abrir Swagger UI (idp-api)"
+  "Abrir MailHog (emails de dev)"
+  "Abrir Kafka UI"
+  "Lint (shellcheck)"
+  "─── PERIGO ──────────────────────"
+  "Nuke (remove volumes — PERDE DADOS)"
+  "Sair"
+)
+declare -a MENU_ACTIONS=(
+  "setup"
+  "doctor"
+  "up"
+  "down"
+  "restart"
+  "status"
+  "logs"
+  ""
+  "test-rooms"
+  "test-rooms-flow"
+  "test-idp"
+  "test-teleconf"
+  ""
+  "dev-web"
+  "dev-idp"
+  ""
+  "open-swagger"
+  "open-mailhog"
+  "open-kafka-ui"
+  "lint"
+  ""
+  "nuke"
+  "quit"
+)
+
+main_loop() {
+  while true; do
+    clear_screen
+    banner
+    printf "%s%sEscolha uma opção (numero):%s\n\n" "${BOLD}" "${YELL}" "${RESET}"
+    local i
+    for i in "${!MENU_LABELS[@]}"; do
+      local label="${MENU_LABELS[${i}]}"
+      local action="${MENU_ACTIONS[${i}]}"
+      if [[ -z "${action}" ]]; then
+        printf "  %s%s%s\n" "${DIM}" "${label}" "${RESET}"
+      else
+        printf "  %s[%2d]%s %s\n" "${GREEN}" "$((i + 1))" "${RESET}" "${label}"
+      fi
+    done
+    printf "\n%s>%s " "${CYAN}" "${RESET}"
+
+    local choice
+    if ! read -r choice; then
+      printf "\n%sCtrl-D — saindo%s\n" "${DIM}" "${RESET}"
+      exit 0
+    fi
+    if [[ -z "${choice}" ]]; then continue; fi
+    if ! [[ "${choice}" =~ ^[0-9]+$ ]]; then
+      printf "%sentrada invalida%s\n" "${RED}" "${RESET}"
+      sleep 1
+      continue
+    fi
+    local idx=$((choice - 1))
+    if (( idx < 0 || idx >= ${#MENU_LABELS[@]} )); then
+      printf "%sopcao fora do intervalo%s\n" "${RED}" "${RESET}"
+      sleep 1
+      continue
+    fi
+    local action="${MENU_ACTIONS[${idx}]}"
+    if [[ -z "${action}" ]]; then continue; fi
+    if [[ "${action}" == "quit" ]]; then
+      printf "\n%s👋 bye%s\n\n" "${CYAN}" "${RESET}"
+      exit 0
+    fi
+    run_action "${action}" || true
+    ask_continue
+  done
+}
+
+main_loop
