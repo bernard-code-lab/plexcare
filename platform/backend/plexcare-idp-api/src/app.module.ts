@@ -7,6 +7,7 @@ import { MetricsModule } from './shared/metrics/metrics.module';
 import { CryptoModule } from './shared/crypto/crypto.module';
 import { KafkaModule } from './shared/kafka/kafka.module';
 import { OutboxModule } from './modules/outbox/outbox.module';
+import { KeycloakModule } from './modules/keycloak/keycloak.module';
 import { AppExceptionFilter } from './shared/errors/app-exception.filter';
 
 @Module({
@@ -16,6 +17,7 @@ import { AppExceptionFilter } from './shared/errors/app-exception.filter';
     PrismaModule,
     CryptoModule,
     KafkaModule,
+    KeycloakModule,
     OutboxModule,
     MetricsModule,
   ],
