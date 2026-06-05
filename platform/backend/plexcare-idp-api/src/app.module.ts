@@ -16,6 +16,7 @@ import { JwksModule } from './modules/jwks/jwks.module';
 import { HealthModule } from './modules/health/health.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { TokenModule } from './modules/token/token.module';
+import { MeModule } from './modules/me/me.module';
 import { AppExceptionFilter } from './shared/errors/app-exception.filter';
 
 @Module({
@@ -35,6 +36,7 @@ import { AppExceptionFilter } from './shared/errors/app-exception.filter';
     HealthModule,
     AuthModule,
     TokenModule,
+    MeModule,
     MetricsModule,
   ],
   controllers: [],
