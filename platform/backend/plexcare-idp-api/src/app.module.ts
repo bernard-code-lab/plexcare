@@ -14,6 +14,8 @@ import { SessionsModule } from './modules/sessions/sessions.module';
 import { RolesModule } from './modules/roles/roles.module';
 import { JwksModule } from './modules/jwks/jwks.module';
 import { HealthModule } from './modules/health/health.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { TokenModule } from './modules/token/token.module';
 import { AppExceptionFilter } from './shared/errors/app-exception.filter';
 
 @Module({
@@ -31,6 +33,8 @@ import { AppExceptionFilter } from './shared/errors/app-exception.filter';
     RolesModule,
     JwksModule,
     HealthModule,
+    AuthModule,
+    TokenModule,
     MetricsModule,
   ],
   controllers: [],
