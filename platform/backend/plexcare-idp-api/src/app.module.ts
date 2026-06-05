@@ -17,6 +17,7 @@ import { HealthModule } from './modules/health/health.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { TokenModule } from './modules/token/token.module';
 import { MeModule } from './modules/me/me.module';
+import { WorkersModule } from './modules/workers/workers.module';
 import { AppExceptionFilter } from './shared/errors/app-exception.filter';
 
 @Module({
@@ -37,6 +38,7 @@ import { AppExceptionFilter } from './shared/errors/app-exception.filter';
     AuthModule,
     TokenModule,
     MeModule,
+    WorkersModule,
     MetricsModule,
   ],
   controllers: [],
