@@ -1,5 +1,13 @@
 import { v4 as uuidv4 } from 'uuid';
 
+/**
+ * Registry de tipos de eventos publicados pelo plexcare-idp-api no outbox.
+ *
+ * Naming: mantemos `IdpEventType` por compat histórica, mas o union já comporta
+ * eventos de outros agregados (ex.: `tenant.subscription.changed` introduzido
+ * na Issue #3 PR-2 / ADR-0011 §D-2). Refactor de nome para `OutboxEventType`
+ * fica para PR dedicado.
+ */
 export type IdpEventType =
   | 'idp.user.signed_up'
   | 'idp.user.email_verified'
@@ -8,7 +16,8 @@ export type IdpEventType =
   | 'idp.session.revoked'
   | 'idp.session.login_failed'
   | 'idp.role.assigned'
-  | 'idp.role.revoked';
+  | 'idp.role.revoked'
+  | 'tenant.subscription.changed';
 
 export const TOPIC_BY_TYPE: Record<IdpEventType, string> = {
   'idp.user.signed_up': 'idp.user.v1',
@@ -19,6 +28,7 @@ export const TOPIC_BY_TYPE: Record<IdpEventType, string> = {
   'idp.session.login_failed': 'idp.session.v1',
   'idp.role.assigned': 'idp.role.v1',
   'idp.role.revoked': 'idp.role.v1',
+  'tenant.subscription.changed': 'tenant.subscription.v1',
 };
 
 export interface CloudEventInput<T> {
