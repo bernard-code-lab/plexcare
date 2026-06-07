@@ -29,3 +29,9 @@ dist-ssr/
 .cursor/rules/codacy.mdc
 
 plataform/plexcare-teleconf/tmp/
+tmp/
+
+# Local-only files (per-dev / per-machine)
+secrets.md
+.mcp.json
+skills-lock.json

@@ -49,7 +49,7 @@ Para qualquer task neste repo, **sempre nesta ordem** (economiza tokens, evita r
 | Backend | Go 1.23 (chi, pgx, zap, OpenTelemetry) — NestJS pode ser adotado conforme caso |
 | Mídia/WebRTC | LiveKit SFU (Go + Pion), coturn (TURN), Egress → S3 |
 | Dados | PostgreSQL 16, Redis 7, Kafka (KRaft) / SQS |
-| Pagamentos | Stripe / Iugu |
+| Pagamentos | ASAAS (gateway único — ADR-0012) |
 | Cloud | AWS EKS, Terraform, GitHub Actions |
 
 ## Agentes Claude
@@ -190,10 +190,17 @@ Para a lista completa de arquivos canônicos **por módulo**, leia o `CLAUDE.md`
 Antes de propor mudança em fila, tenancy, auth, banco ou protocolo, **leia o ADR correspondente** em `docs/adr/`:
 
 - [ADR-0001](docs/adr/0001-kafka-como-event-bus-interno.md) — Kafka como event bus interno
-- [ADR-0002](docs/adr/0002-multi-tenancy-via-header-context.md) — Multi-tenancy via header + `context.Context`
+- [ADR-0002](docs/adr/0002-multi-tenancy-via-header-context.md) — Multi-tenancy via header + `context.Context` *(superseção parcial por ADR-0011)*
 - [ADR-0003](docs/adr/0003-separacao-site-web-service.md) — Separação `site` / `teleconf-web` / `teleconf-service`
 - [ADR-0004](docs/adr/0004-idp-proprio-keycloak-oculto.md) — IdP próprio com Keycloak oculto
 - [ADR-0005](docs/adr/0005-outbox-worker-poll.md) — Outbox transacional + worker poll para Kafka
+- [ADR-0006](docs/adr/0006-metering-rooms-schedule.md) — Metering Rooms + Schedule (billable minutes ceiling)
+- [ADR-0007](docs/adr/0007-encaixe-online-cross-produto.md) — Encaixe online cross-produto (Schedule → Rooms)
+- [ADR-0008](docs/adr/0008-plan-data-model.md) — Plan data model (catálogo idp-api MySQL + read-model Postgres)
+- [ADR-0009](docs/adr/0009-pool-compartilhado-suite.md) — Pool compartilhado da Suite (deferido para V2)
+- [ADR-0010](docs/adr/0010-billing-gateway-stripe-iugu.md) — Gateway billing Stripe + Iugu *(Superseded by ADR-0012)*
+- [ADR-0011](docs/adr/0011-resolucao-tenant-runtime-teleconf.md) — Resolução de tenant runtime via JWT idp-api + read-model
+- [ADR-0012](docs/adr/0012-gateway-unico-asaas.md) — Gateway único de pagamento: ASAAS
 
 Para criar ADR novo: copie `docs/adr/template.md` ou invoque `/adr`.
 

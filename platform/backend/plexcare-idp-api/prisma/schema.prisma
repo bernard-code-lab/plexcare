@@ -29,6 +29,7 @@ datasource db {
 model Account {
   id         BigInt @id @default(autoincrement()) @db.UnsignedBigInt
   customerId BigInt @map("customer_id") @db.UnsignedBigInt
+  tenantUuid String @unique(map: "idx_account_tenant_uuid") @default(dbgenerated("(UUID())")) @map("tenant_uuid") @db.Char(36)
 
   idpUsers     IdpUser[]
   idpUserRoles IdpUserRole[]

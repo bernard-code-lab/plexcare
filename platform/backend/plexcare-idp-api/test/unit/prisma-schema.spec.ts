@@ -33,6 +33,25 @@ describe('prisma/schema.prisma', () => {
   it('uses provider mysql', () => {
     expect(schema).toMatch(/provider\s*=\s*"mysql"/);
   });
+
+  // Issue #3 — Feature: `tenant_uuid` exposto pelo idp-api
+  describe('Account model — campo tenantUuid (Issue #3 / ADR-0011)', () => {
+    function accountModelBlock(): string {
+      const start = schema.indexOf('model Account ');
+      expect(start).toBeGreaterThan(-1);
+      const end = schema.indexOf('}', start);
+      return schema.slice(start, end);
+    }
+
+    it('Account declara tenantUuid mapeado para coluna tenant_uuid CHAR(36) UNIQUE', () => {
+      const block = accountModelBlock();
+      // Aceita ambas as formas idiomáticas (com ou sem @map explícito —
+      // o snake↔camel é convertido automaticamente pelo Prisma).
+      expect(block).toMatch(/tenantUuid\s+String[^\n]*@unique[^\n]*@db\.Char\(36\)/);
+      expect(block).toMatch(/@map\(\s*"tenant_uuid"\s*\)/);
+      expect(block).toMatch(/@default\(dbgenerated\("\(UUID\(\)\)"\)\)/);
+    });
+  });
 });
 
 describe('prisma/migrations', () => {

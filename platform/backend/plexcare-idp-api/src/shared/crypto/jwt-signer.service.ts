@@ -12,6 +12,12 @@ export interface IdpClaims {
   client_id: string;
   account_id?: string;
   account_customer_id?: string;
+  /**
+   * UUID externo do tenant — alias estável (não-numérico) do account_id.
+   * Consumido pelos serviços downstream como identificador canônico
+   * (ADR-0011 §D-1, Issue #3).
+   */
+  tenant_id?: string;
   active_role?: string;
   roles?: string[];
   doctor_id?: string | null;

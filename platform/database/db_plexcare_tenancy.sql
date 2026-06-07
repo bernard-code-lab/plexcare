@@ -33,8 +33,10 @@ DROP TABLE IF EXISTS `account`;
 CREATE TABLE `account` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `customer_id` bigint unsigned NOT NULL COMMENT 'FK lógico a db_plexcare_party.customer(id)',
+  `tenant_uuid` char(36) NOT NULL DEFAULT (UUID()) COMMENT 'Identificador externo UUID do tenant — usado em JWT claim tenant_id e exposto a serviços downstream (ADR-0011, Issue #3)',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_account_id_customer` (`id`,`customer_id`),
+  UNIQUE KEY `idx_account_tenant_uuid` (`tenant_uuid`),
   KEY `ix_account_customer_id` (`customer_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -45,7 +47,7 @@ CREATE TABLE `account` (
 
 LOCK TABLES `account` WRITE;
 /*!40000 ALTER TABLE `account` DISABLE KEYS */;
-INSERT INTO `account` VALUES (1,1),(2,2);
+INSERT INTO `account` (`id`, `customer_id`) VALUES (1,1),(2,2);
 /*!40000 ALTER TABLE `account` ENABLE KEYS */;
 UNLOCK TABLES;
 
