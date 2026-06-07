@@ -18,6 +18,10 @@ export function buildAccessClaims(input: ClaimsInput): IdpClaims {
     audience: input.audience,
     account_id: input.active.accountId.toString(),
     account_customer_id: input.active.accountCustomerId.toString(),
+    // ADR-0011 §D-1 / Issue #3 — tenant_id é o identificador externo (UUID)
+    // do tenant, consumido pelos serviços downstream. account_id é mantido
+    // por compat e como chave interna de auditoria (BigInt como string).
+    tenant_id: input.active.tenantUuid,
     active_role: input.active.role,
     roles: Array.from(new Set(input.all.map((r) => r.role))),
     doctor_id: input.active.doctorId?.toString() ?? null,

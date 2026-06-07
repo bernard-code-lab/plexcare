@@ -5,6 +5,12 @@ import { AppException } from '../../shared/errors/app-exception';
 export interface UserRoleSummary {
   accountId: bigint;
   accountCustomerId: bigint;
+  /**
+   * UUID externo do tenant correspondente a este account.
+   * Source-of-truth: account.tenant_uuid (ADR-0011 §D-1, Issue #3).
+   * Emitido como claim `tenant_id` no access token.
+   */
+  tenantUuid: string;
   role: string;
   doctorId: bigint | null;
   clientId: bigint | null;
@@ -30,10 +36,12 @@ export class RoleResolverService {
     const rows = await this.prisma.idpUserRole.findMany({
       where: { idpUserId: input.idpUserId, revokedAt: null },
       orderBy: { createdAt: 'asc' },
+      include: { account: true },
     });
     const all: UserRoleSummary[] = rows.map((r) => ({
       accountId: r.accountId,
       accountCustomerId: r.accountCustomerId,
+      tenantUuid: r.account.tenantUuid,
       role: r.role,
       doctorId: r.doctorId,
       clientId: r.clientId,
