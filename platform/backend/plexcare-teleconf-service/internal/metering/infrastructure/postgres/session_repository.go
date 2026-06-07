@@ -75,11 +75,54 @@ func (r *SessionRepository) CloseSession(ctx context.Context, roomID, participan
 	return session, nil
 }
 
-// SumMinutesByTenantAndPeriod e CountRoomsByTenantAndPeriod: não implementados ainda.
-// O AggregateUseCase fará SQL próprio ou usaremos a tabela monthly_usage no upsert pelo aggregator.
-func (r *SessionRepository) SumMinutesByTenantAndPeriod(ctx context.Context, _, _ string) (int, error) {
-	return 0, fmt.Errorf("SumMinutesByTenantAndPeriod: not implemented")
+// SumMinutesByTenantAndPeriod soma billable_minutes das sessões fechadas (left_at preenchido)
+// de um tenant cujo joined_at cai no mês UTC indicado por `period` ("YYYY-MM").
+// Bate no índice idx_sessions_tenant_period — a expressão à esquerda é idêntica.
+func (r *SessionRepository) SumMinutesByTenantAndPeriod(ctx context.Context, tenantID, period string) (int, error) {
+	monthStart, err := parsePeriod(period)
+	if err != nil {
+		return 0, err
+	}
+	const q = `
+		SELECT COALESCE(SUM(billable_minutes), 0)
+		  FROM participant_sessions
+		 WHERE tenant_id = $1
+		   AND date_trunc('month', joined_at AT TIME ZONE 'UTC') = $2::timestamp
+		   AND billable_minutes IS NOT NULL
+	`
+	var total int
+	if err := r.pool.QueryRow(ctx, q, tenantID, monthStart).Scan(&total); err != nil {
+		return 0, fmt.Errorf("sum billable minutes: %w", err)
+	}
+	return total, nil
 }
-func (r *SessionRepository) CountRoomsByTenantAndPeriod(ctx context.Context, _, _ string) (int, error) {
-	return 0, fmt.Errorf("CountRoomsByTenantAndPeriod: not implemented")
+
+// CountRoomsByTenantAndPeriod conta rooms distintos com pelo menos uma sessão no mês.
+// Sessões abertas (left_at IS NULL) contam — sala viva já é volume para billing.
+func (r *SessionRepository) CountRoomsByTenantAndPeriod(ctx context.Context, tenantID, period string) (int, error) {
+	monthStart, err := parsePeriod(period)
+	if err != nil {
+		return 0, err
+	}
+	const q = `
+		SELECT COUNT(DISTINCT room_id)
+		  FROM participant_sessions
+		 WHERE tenant_id = $1
+		   AND date_trunc('month', joined_at AT TIME ZONE 'UTC') = $2::timestamp
+	`
+	var total int
+	if err := r.pool.QueryRow(ctx, q, tenantID, monthStart).Scan(&total); err != nil {
+		return 0, fmt.Errorf("count distinct rooms: %w", err)
+	}
+	return total, nil
+}
+
+// parsePeriod converte "YYYY-MM" para timestamp UTC no início do mês.
+// Compatível com a expressão indexada idx_sessions_tenant_period.
+func parsePeriod(period string) (time.Time, error) {
+	t, err := time.Parse("2006-01", period)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("parse period %q (esperado YYYY-MM): %w", period, err)
+	}
+	return t, nil
 }
